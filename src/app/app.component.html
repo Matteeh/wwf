@@ -1,46 +1,53 @@
 <ion-app>
-  <ion-split-pane contentId="main-content">
+  <ion-split-pane
+    contentId="main-content"
+    *ngIf="auth.user | async as user; else signIn"
+  >
     <ion-menu contentId="main-content" type="overlay">
       <ion-content>
         <ion-list id="inbox-list">
-          <ion-list-header>Watch with friends</ion-list-header>
-
-          <ion-menu-toggle
-            auto-hide="false"
-            *ngFor="let p of appPages; let i = index"
-          >
-            <ion-item
-              (click)="selectedIndex = i"
-              routerDirection="root"
-              [routerLink]="[p.url]"
-              lines="none"
-              detail="false"
-              [class.selected]="selectedIndex == i"
-            >
-              <ion-icon
-                slot="start"
-                [ios]="p.icon + '-outline'"
-                [md]="p.icon + '-sharp'"
-              ></ion-icon>
-              <ion-label>{{ p.title }}</ion-label>
-            </ion-item>
-          </ion-menu-toggle>
+          <ion-list-header>Chomie</ion-list-header>
         </ion-list>
 
         <ion-list id="labels-list">
-          <ion-list-header>Labels</ion-list-header>
+          <ion-list-header>Users</ion-list-header>
 
-          <ion-item *ngFor="let label of labels" lines="none">
+          <ion-item *ngFor="let user of users" lines="none">
             <ion-icon
               slot="start"
-              ios="bookmark-outline"
-              md="bookmark-sharp"
+              ios="person-outline"
+              md="person-outline"
             ></ion-icon>
-            <ion-label>{{ label }}</ion-label>
+            <ion-label>{{ user.username }}</ion-label>
+            <ion-chip
+              slot="end"
+              outline
+              color="success"
+              *ngIf="user.status.status == 'online'; else offline"
+            >
+              <ion-label color="success">{{ user.status.status }}</ion-label>
+            </ion-chip>
+            <ng-template #offline>
+              <ion-chip slot="end" outline color="danger">
+                <ion-label color="danger">{{ user.status.status }}</ion-label>
+              </ion-chip>
+            </ng-template>
+          </ion-item>
+        </ion-list>
+        <ion-item></ion-item>
+        <ion-list>
+          <ion-item lines="none">
+            <ion-button color="light" (click)="presence.signOut()"
+              >Sign out</ion-button
+            >
           </ion-item>
         </ion-list>
       </ion-content>
     </ion-menu>
     <ion-router-outlet id="main-content"></ion-router-outlet>
   </ion-split-pane>
+
+  <ng-template #signIn>
+    <ion-router-outlet id="main-content"></ion-router-outlet>
+  </ng-template>
 </ion-app>

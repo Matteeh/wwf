@@ -1,0 +1,49 @@
+<ion-header>
+  <!--
+  <ion-toolbar>
+    <ion-title>HOMIES</ion-title>
+  </ion-toolbar>
+
+-->
+</ion-header>
+
+<ion-content>
+  <ion-grid>
+    <div *ngIf="!videoIsPlaying && user.isHost; else guest">
+      <ion-row class="ion-align-items-center ion-justify-content-center">
+        <ion-col size="3">
+          <app-search-bar
+            (searchValue)="handleSearchValue($event)"
+          ></app-search-bar>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col *ngFor="let video of videos">
+          <app-video-card
+            [video]="video"
+            (videoId)="setVideoId($event)"
+          ></app-video-card>
+        </ion-col>
+      </ion-row>
+      <ion-row class="ion-align-items-center ion-justify-content-center">
+        <ion-col size="2">
+          <ion-button (click)="startVideoClick()">Start Video</ion-button>
+        </ion-col>
+      </ion-row>
+    </div>
+    <ng-template #guest>
+      <ion-row class="ion-align-items-center ion-justify-content-center">
+        <ion-col size="3">
+          <p>Waiting for host</p>
+        </ion-col>
+      </ion-row>
+    </ng-template>
+    <ion-row
+      class="ion-align-items-center ion-justify-content-center video-player-container"
+    >
+      <ion-col>
+        <app-youtube-player></app-youtube-player>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

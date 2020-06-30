@@ -1,0 +1,17 @@
+<ion-card (click)="onCardClick($event)" tappable style="width: 250px;">
+  <img [src]="video.snippet.thumbnails.medium.url" />
+  <ion-card-header>
+    <ion-card-subtitle
+      ><!--<a href="https://www.youtube.com/watch?v={{ video.id.videoId }}"
+        >{{ video.snippet.title }}
+      </a> -->
+      <p class="video-title">
+        {{ video.snippet.title }}
+      </p></ion-card-subtitle
+    >
+    <ion-card-title></ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    <!-- {{video.snippet.description}} -->
+  </ion-card-content>
+</ion-card>

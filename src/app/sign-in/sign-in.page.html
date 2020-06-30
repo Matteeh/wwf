@@ -1,9 +1,35 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>sign-in</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-header> </ion-header>
 
-<ion-content>
+<ion-content
+  style="background-color: blueviolet; height: 400px;"
+  class="ion-justify-content-center ion-align-self-center"
+>
+  <ion-grid style="height: 100%;">
+    <ion-row
+      style="height: 90%;"
+      class="ion-align-items-center ion-justify-content-center"
+    >
+      <ion-card style="width: 450px; height: 450px;" class="ion-padding">
+        <ion-card-header>
+          <ion-card-title class="ion-text-center"
+            ><ion-title>Chomie</ion-title></ion-card-title
+          >
+        </ion-card-header>
 
+        <ion-card-content
+          style="height: 100%;"
+          class="ion-justify-content-center ion-align-items-end"
+        >
+          <ion-row
+            style="height: 80%;"
+            class="ion-justify-content-center ion-align-items-end"
+          >
+            <ion-button (click)="auth.googleSignin()"
+              >Sign in with Google</ion-button
+            >
+          </ion-row>
+        </ion-card-content>
+      </ion-card>
+    </ion-row>
+  </ion-grid>
 </ion-content>

@@ -11,6 +11,7 @@ import { AppRoutingModule } from "./app-routing.module";
 
 import { AngularFireModule } from "@angular/fire";
 import { AngularFireAuthModule } from "@angular/fire/auth";
+import { UserService } from "./services/user.service";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCKti8GY-KRoqfBj0rxvSeZAr0xwY0cbEM",
@@ -20,7 +21,7 @@ const firebaseConfig = {
   storageBucket: "wwf-4d.appspot.com",
   messagingSenderId: "794130457895",
   appId: "1:794130457895:web:b72ddf67453ccaa2b6b502",
-  measurementId: "G-NF97THJE0R"
+  measurementId: "G-NF97THJE0R",
 };
 
 @NgModule({
@@ -31,13 +32,14 @@ const firebaseConfig = {
     IonicModule.forRoot(),
     AppRoutingModule,
     AngularFireModule.initializeApp(firebaseConfig),
-    AngularFireAuthModule
+    AngularFireAuthModule,
   ],
   providers: [
     StatusBar,
     SplashScreen,
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
+    UserService,
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
 export class AppModule {}

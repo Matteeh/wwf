@@ -4,32 +4,29 @@ import { Router } from "@angular/router";
 import { auth } from "firebase/app";
 import { AngularFireAuth } from "@angular/fire/auth";
 
-import {
-  AngularFirestore,
-  AngularFirestoreDocument
-} from "@angular/fire/firestore";
+import { AngularFireDatabase } from "@angular/fire/database";
 
 import { Observable, of } from "rxjs";
-import { switchMap } from "rxjs/operators";
+import { switchMap, min } from "rxjs/operators";
 
 import { User } from "../models/user.model";
+import { Channel } from "../models/channel.model";
 
 @Injectable({
-  providedIn: "root"
+  providedIn: "root",
 })
 export class AuthService {
-  // Use User interface here when its defined
-  user: Observable<any>;
+  user: Observable<User>;
 
   constructor(
     private afAuth: AngularFireAuth,
-    private afs: AngularFirestore,
+    private db: AngularFireDatabase,
     private router: Router
   ) {
     this.user = this.afAuth.authState.pipe(
-      switchMap(user => {
+      switchMap((user) => {
         return user
-          ? this.afs.doc<User>(`users/${user.uid}`).valueChanges()
+          ? this.db.list(`users/${user.uid}`).valueChanges()
           : of(null);
       })
     );
@@ -37,8 +34,13 @@ export class AuthService {
 
   async googleSignin() {
     const provider = new auth.GoogleAuthProvider();
-    const credentials = await this.afAuth.signInWithPopup(provider);
-    return this.updateUserData(credentials.user);
+    const credentials: any = await this.afAuth.signInWithPopup(provider);
+    const user = this.createUserFromGoogleData(credentials.user);
+    this.updateUserData(user);
+    this.updateChannelData(user);
+    this.router.navigate([
+      `/${credentials.user.displayName.replace(/\s/g, "")}`,
+    ]);
   }
 
   async signOut() {
@@ -46,18 +48,50 @@ export class AuthService {
     return this.router.navigate(["/"]);
   }
 
-  private updateUserData(user) {
+  private updateUserData(user: User) {
     // Sets user data to firestore on login
-    const userRef: AngularFirestoreDocument<User> = this.afs.doc(
-      `users/${user.uid}`
-    );
+    const userRef = this.db.object(`users/${user.uid}`);
 
-    const data = {
+    const data: User = {
       uid: user.uid,
       email: user.email,
-      displayName: user.displayName
+      isHost: user.isHost || null,
+      isReady: user.isReady || null,
+      username: user.username.replace(/\s/g, ""),
+      status: {
+        status: user.status ? user.status.status : null,
+        timestamp: user.status ? user.status.timestamp : null,
+      },
     };
+    // Set is destructive use update
+    return userRef.update(data);
+  }
 
-    return userRef.set(data, { merge: true });
+  private createUserFromGoogleData(user: any): User {
+    return {
+      uid: user.uid,
+      email: user.email,
+      isHost: user.isHost || null,
+      isReady: user.isReady || null,
+      username: user.displayName.replace(/\s/g, ""),
+      status: { status: null, timestamp: null },
+    };
+  }
+
+  private updateChannelData(user) {
+    // Sets user data to firestore on login
+    const channelRef = this.db.object(`channels/${user.username}`);
+
+    const data: Channel = {
+      uid: user.username,
+      isPlaying: false,
+      users: null,
+      canPlay: false,
+      hostIsOnline: null,
+      videoId: null,
+      status: { status: null, timestamp: null },
+    };
+    // Set is destructive use update
+    return channelRef.update(data);
   }
 }
