@@ -7,8 +7,7 @@ import { AuthService } from "./services/auth.service";
 import { PresenceService } from "./services/presence.service";
 import { Router } from "@angular/router";
 import { UserService } from "./services/user.service";
-import { switchMap } from "rxjs/operators";
-import { of } from "rxjs";
+import { Subject } from "rxjs";
 
 @Component({
   selector: "app-root",
@@ -19,6 +18,7 @@ export class AppComponent implements OnInit {
   public selectedIndex = 0;
   public labels = ["Xqc", "Lirik", "Sodapoppin", "Reckful", "Nmplol", "Jok3rd"];
   public users = [];
+  mouseOnUser = new Subject<number>();
 
   constructor(
     private platform: Platform,
@@ -48,6 +48,19 @@ export class AppComponent implements OnInit {
         this.router.navigate(["/sign-in"]);
       }
     });
+  }
+
+  mouseOverUser(index) {
+    this.mouseOnUser.next(index);
+  }
+
+  mouseOverUserLeave(index) {
+    this.mouseOnUser.next(null);
+  }
+
+  onUserClick(user) {
+    if (user.status && user.status.status === "online")
+      this.router.navigate([`/${user.username}`]);
   }
 
   /**

@@ -12,7 +12,14 @@
         <ion-list id="labels-list">
           <ion-list-header>Users</ion-list-header>
 
-          <ion-item *ngFor="let user of users" lines="none">
+          <ion-item
+            *ngFor="let user of users; let index"
+            class="user-item"
+            lines="none"
+            (mouseenter)="mouseOverUser(index)"
+            (mouseleave)="mouseOverUserLeave(index)"
+            (click)="onUserClick(user)"
+          >
             <ion-icon
               slot="start"
               ios="person-outline"
@@ -28,7 +35,12 @@
                 else offline
               "
             >
-              <ion-label color="success">Online</ion-label>
+              <ion-label color="success"
+                ><span *ngIf="(mouseOnUser | async) === index; else join"
+                  >Join user</span
+                >
+                <ng-template #join><span>Online</span></ng-template></ion-label
+              >
             </ion-chip>
             <ng-template #offline>
               <ion-chip slot="end" outline color="danger">
