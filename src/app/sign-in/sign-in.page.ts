@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { AuthService } from "../services/auth.service";
 import { Router } from "@angular/router";
+import { first } from "rxjs/operators";
 
 @Component({
   selector: "app-sign-in",
@@ -11,8 +12,7 @@ export class SignInPage implements OnInit {
   constructor(public auth: AuthService, private router: Router) {}
 
   ngOnInit() {
-    console.log("i run");
-    this.auth.user.subscribe((user) => {
+    this.auth.user.pipe(first()).subscribe((user) => {
       console.log(user);
       if (user !== null) {
         this.router.navigate([`/${user.username}`]);
