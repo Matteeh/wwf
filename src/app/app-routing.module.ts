@@ -1,6 +1,7 @@
 import { NgModule } from "@angular/core";
 import { PreloadAllModules, RouterModule, Routes } from "@angular/router";
 import { AuthGuard } from "./services/auth.guard";
+import { ErrorComponent } from "./components/error/error.component";
 
 const routes: Routes = [
   {
@@ -19,6 +20,7 @@ const routes: Routes = [
     loadChildren: () =>
       import("./sign-in/sign-in.module").then((m) => m.SignInPageModule),
   },
+  { path: "channel-not-found", component: ErrorComponent },
   {
     path: ":id",
     canActivate: [AuthGuard],

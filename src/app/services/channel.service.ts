@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { AngularFireDatabase } from "@angular/fire/database";
 import { Observable } from "rxjs";
 import { Channel } from "../models/channel.model";
-import { map } from "rxjs/operators";
+import { map, first } from "rxjs/operators";
 import { User } from "../models/user.model";
 import * as firebase from "firebase";
 
@@ -16,17 +16,54 @@ export class ChannelService {
 
   constructor(private db: AngularFireDatabase) {}
 
-  getChannelByUsername(username): Observable<any> {
-    return this.db
-      .list("channels", (channels) =>
-        channels.orderByChild("uid").equalTo(username)
-      )
-      .valueChanges();
+  getChannel(uid: string): Observable<any> {
+    return this.db.object(`channels/${uid}`).valueChanges();
   }
 
-  updateChannelUsers(channel: Channel, user: User) {
-    const channelRef = this.db.object(`channels/${channel.uid}`);
-    const users = channel.users ? [...channel.users, user] : [user];
+  getChannelUsers(uid) {
+    return this.db
+      .list("channels", (channels) => channels.orderByChild("uid").equalTo(uid))
+      .valueChanges()
+      .pipe(
+        first(),
+        map((channel: Channel[]) => (channel.length ? channel[0].users : []))
+      );
+  }
+
+  /**
+   * Updates channel with new info
+   */
+  updateChannel(channelUid: string) {
+    const channelRef = this.db.object(`channels/${channelUid}`);
+    // return channelRef.update();
+  }
+
+  addChannelUser(channelUid: string, currentUsers: string[], userUid: string) {
+    const channelRef = this.db.object(`channels/${channelUid}`);
+    let users = [];
+    if (!currentUsers || !currentUsers.length) {
+      users = [userUid];
+    } else if (this.arrayContainsUser(userUid, currentUsers)) {
+      return Promise.resolve();
+    } else {
+      users = [...currentUsers, userUid];
+    }
+
+    return channelRef.update({ users });
+  }
+
+  removeChannelUser(channelUid: string, currentUsers: string[], user: User) {
+    console.log("i run remove channel user");
+    const channelRef = this.db.object(`channels/${channelUid}`);
+    let users = [];
+    if (!currentUsers || !currentUsers.length) {
+      users = [];
+    } else if (!this.arrayContainsUser(user.uid, currentUsers)) {
+      return Promise.resolve();
+    } else {
+      users = currentUsers.filter((uid: string) => uid === user.uid);
+    }
+
     return channelRef.update({ users });
   }
 
@@ -36,13 +73,9 @@ export class ChannelService {
   }
 
   // Play // Pause // Stop
-  updateChannelPlayStatus(channel: Channel, status: string) {
-    const channelRef = this.db.object(`channels/${channel.uid}`);
+  updateChannelPlayStatus(channelUid: string, status: string) {
+    const channelRef = this.db.object(`channels/${channelUid}`);
     return channelRef.update({ status: { status, timestamp: this.timestamp } });
-  }
-
-  watchChannelPlayStatus(channelUid: string) {
-    return this.db.object(`channels/${channelUid}`).valueChanges();
   }
 
   private lookForHostInChannelUsers(users: any[]) {
@@ -51,6 +84,13 @@ export class ChannelService {
       "lookforhost"
     );
     return users.find((users) => users.isHost === true);
+  }
+
+  /**
+   * Check if array already contains current user
+   */
+  private arrayContainsUser(userUid: string, users: string[]): boolean {
+    return users.some((uid) => uid === userUid);
   }
 }
 

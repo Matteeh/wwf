@@ -23,13 +23,16 @@
               slot="end"
               outline
               color="success"
-              *ngIf="user.status.status == 'online'; else offline"
+              *ngIf="
+                user && user.status && user.status.status == 'online';
+                else offline
+              "
             >
-              <ion-label color="success">{{ user.status.status }}</ion-label>
+              <ion-label color="success">Online</ion-label>
             </ion-chip>
             <ng-template #offline>
               <ion-chip slot="end" outline color="danger">
-                <ion-label color="danger">{{ user.status.status }}</ion-label>
+                <ion-label color="danger">Offline</ion-label>
               </ion-chip>
             </ng-template>
           </ion-item>
@@ -37,7 +40,7 @@
         <ion-item></ion-item>
         <ion-list>
           <ion-item lines="none">
-            <ion-button color="light" (click)="presence.signOut()"
+            <ion-button color="light" (click)="onSignOutClick()"
               >Sign out</ion-button
             >
           </ion-item>

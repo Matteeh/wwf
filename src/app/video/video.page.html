@@ -9,7 +9,7 @@
 
 <ion-content>
   <ion-grid>
-    <div *ngIf="!videoIsPlaying && user.isHost; else guest">
+    <div *ngIf="isHost; else guest">
       <ion-row class="ion-align-items-center ion-justify-content-center">
         <ion-col size="3">
           <app-search-bar

@@ -12,6 +12,9 @@ export class YoutubePlayerComponent implements OnInit {
     this.IframeApiInit();
   }
 
+  /**
+   * Initialize the youtube iframe api
+   */
   IframeApiInit() {
     var tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";

@@ -17,7 +17,6 @@ export class PresenceService {
     private afAuth: AngularFireAuth,
     private db: AngularFireDatabase
   ) {
-    console.log("presence");
     this.updateOnUser().subscribe();
     this.updateOnDisconnect().subscribe();
   }
@@ -61,15 +60,11 @@ export class PresenceService {
 
   async setPresence(status: string) {
     const user = await this.getUser();
-    if (user) {
+    console.log(user);
+    if (user && user.uid) {
       return this.db
         .object(`users/${user.uid}`)
         .update({ status: { status, timestamp: this.timestamp } });
     }
-  }
-
-  async signOut() {
-    await this.setPresence("offline");
-    await this.afAuth.signOut();
   }
 }

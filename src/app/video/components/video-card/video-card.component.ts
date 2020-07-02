@@ -13,6 +13,9 @@ export class VideoCardComponent implements OnInit {
 
   ngOnInit() {}
 
+  /**
+   * Emit card click event to parent
+   */
   onCardClick(e) {
     return this.videoId.emit(this.video.id.videoId);
   }

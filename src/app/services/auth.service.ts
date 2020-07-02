@@ -26,7 +26,7 @@ export class AuthService {
     this.user = this.afAuth.authState.pipe(
       switchMap((user) => {
         return user
-          ? this.db.list(`users/${user.uid}`).valueChanges()
+          ? this.db.object(`users/${user.uid}`).valueChanges()
           : of(null);
       })
     );
@@ -43,9 +43,12 @@ export class AuthService {
     ]);
   }
 
+  /**
+   * Signs the user out
+   */
   async signOut() {
     await this.afAuth.signOut();
-    return this.router.navigate(["/"]);
+    return this.router.navigate(["/sign-in"]);
   }
 
   private updateUserData(user: User) {
@@ -55,7 +58,6 @@ export class AuthService {
     const data: User = {
       uid: user.uid,
       email: user.email,
-      isHost: user.isHost || null,
       isReady: user.isReady || null,
       username: user.username.replace(/\s/g, ""),
       status: {
@@ -71,7 +73,6 @@ export class AuthService {
     return {
       uid: user.uid,
       email: user.email,
-      isHost: user.isHost || null,
       isReady: user.isReady || null,
       username: user.displayName.replace(/\s/g, ""),
       status: { status: null, timestamp: null },
@@ -84,12 +85,10 @@ export class AuthService {
 
     const data: Channel = {
       uid: user.username,
-      isPlaying: false,
       users: null,
-      canPlay: false,
       hostIsOnline: null,
-      videoId: null,
       status: { status: null, timestamp: null },
+      video: {},
     };
     // Set is destructive use update
     return channelRef.update(data);

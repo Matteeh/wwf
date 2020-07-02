@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { YoutubeService } from "../services/youtube.service";
 import { AuthService } from "../services/auth.service";
 import { Router } from "@angular/router";
@@ -12,37 +12,32 @@ import {
   tap,
   takeWhile,
   takeUntil,
+  first,
+  take,
 } from "rxjs/operators";
 import { User } from "../models/user.model";
 import { Channel } from "../models/channel.model";
 import { ChannelService } from "../services/channel.service";
 import { PresenceService } from "../services/presence.service";
+import { Subscription } from "rxjs";
 
 @Component({
   selector: "app-video",
   templateUrl: "./video.page.html",
   styleUrls: ["./video.page.scss"],
 })
-export class VideoPage implements OnInit {
+export class VideoPage implements OnInit, OnDestroy {
   counter: number = 0;
+  isHost = false;
   user: User = {
     username: null,
     email: null,
     uid: null,
-    isHost: null,
     isReady: null,
     status: { status: null, timestamp: null },
   };
 
-  channel: Channel = {
-    uid: null,
-    isPlaying: null,
-    users: null,
-    hostIsOnline: null,
-    canPlay: null,
-    videoId: null,
-    status: { status: null, timestamp: null },
-  };
+  channel: Channel;
 
   videos: any[] = [];
   videoId: any;
@@ -50,6 +45,8 @@ export class VideoPage implements OnInit {
   player: any;
   reframed = false;
   videoIsPlaying = false;
+
+  userSubscription: Subscription;
   constructor(
     private youtubeService: YoutubeService,
     private authService: AuthService,
@@ -60,47 +57,54 @@ export class VideoPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.channel.uid = this.router.url.substr(1);
-    this.authService.user
+    const channelUid = this.router.url.substr(1);
+    this.userSubscription = this.authService.user
       .pipe(
-        switchMap((user: any) => {
-          this.setUser(user);
-          return this.userService.getUserByUsername(user[3]);
+        switchMap((user: User) => {
+          if (!user) {
+            // Navigate away if no user
+            this.router.navigate["/sign-in"];
+          } else {
+            this.setUser(user);
+            this.setIsHost(user.username);
+          }
+          // Check that user actually exists
+          return this.userService.getUserByUsername(channelUid);
         }),
-        mapTo(true),
-        tap((userExists) =>
-          userExists ? "" : this.router.navigateByUrl("/404")
+        tap(
+          // Navigate away if user not found in db
+          (res) => res.length || this.router.navigate(["/channel-not-found"])
         ),
-        switchMap(() => {
-          return this.presence.getPresence(this.user.uid);
-        }),
-        switchMap(() => {
-          return this.channelService.updateChannelUsers(
-            this.channel,
-            this.user
+        switchMap(() =>
+          this.channelService.getChannelUsers(channelUid).pipe(take(1))
+        ),
+        // Update channel... Also user ?
+        switchMap((channelUsers: string[]) => {
+          return this.channelService.addChannelUser(
+            channelUid,
+            channelUsers,
+            this.user.uid
           );
         }),
-        switchMap(() => {
-          return this.channelService.watchChannelPlayStatus(
-            this.router.url.substr(1)
-          );
-        })
+        switchMap(() => this.channelService.getChannel(channelUid))
       )
-      .subscribe((channel: any) => {
-        this.channel = { ...channel };
+      .subscribe((channel) => {
+        this.setChannel(channel);
+        console.log(this.channel);
         if (
-          channel.status &&
-          channel.status.status === "play" &&
-          channel.videoId
+          this.channel &&
+          this.channel.status &&
+          this.channel.status.status === "play" &&
+          this.channel.video.videoId
         ) {
           this.startVideo();
         }
-        this.counter++;
-        console.log(channel, "test channel");
-        console.log(this.counter);
       });
   }
 
+  /**
+   * Sets the video id locally and in the db
+   */
   setVideoId(e) {
     console.log(e);
     this.videoId = e;
@@ -108,14 +112,20 @@ export class VideoPage implements OnInit {
     console.log(this.videoId);
   }
 
+  /**
+   * On start video click
+   */
   startVideoClick() {
-    this.channelService.updateChannelPlayStatus(this.channel, "play");
+    this.channelService.updateChannelPlayStatus(this.channel.uid, "play");
   }
 
+  /**
+   * Starts the youtube video player
+   */
   startVideo() {
     this.reframed = false;
     this.player = new window["YT"].Player("player", {
-      videoId: this.channel.videoId,
+      videoId: this.channel.video.videoId,
       playerVars: {
         autoplay: 1,
         modestbranding: 1,
@@ -134,10 +144,16 @@ export class VideoPage implements OnInit {
     });
   }
 
+  /**
+   * Hook for youtube video player
+   */
   onPlayerReady(event) {
     event.target.playVideo();
   }
 
+  /**
+   * State handler for the youtube video player
+   */
   onPlayerStateChange(event) {
     console.log(event);
     switch (event.data) {
@@ -150,7 +166,12 @@ export class VideoPage implements OnInit {
         this.videoIsPlaying = true;
         break;
       case window["YT"].PlayerState.PAUSED:
-        if (this.player.getDuration() - this.player.getCurrentTime() != 0) {
+        console.log(this.player);
+        if (
+          this.player.playerInfo.duration -
+            this.player.playerInfo.currentTime !=
+          0
+        ) {
           console.log("paused" + "@" + this.cleanTime());
         }
         // this.videoIsPlaying = false;
@@ -162,10 +183,16 @@ export class VideoPage implements OnInit {
     }
   }
 
+  /**
+   * Cleans time for the youtube video player
+   */
   cleanTime() {
-    return Math.round(this.player.getCurrentTime());
+    return Math.round(this.player.playerInfo.currentTime);
   }
 
+  /**
+   * Error handler for the youtube video player
+   */
   onPlayerError(event) {
     switch (event.data) {
       case 2:
@@ -178,6 +205,9 @@ export class VideoPage implements OnInit {
     }
   }
 
+  /**
+   * Handles the user input from the search-bar component
+   */
   handleSearchValue(searchValue: string) {
     this.youtubeService.listVideos(searchValue).subscribe((list) => {
       this.videos = [];
@@ -190,18 +220,67 @@ export class VideoPage implements OnInit {
     });
   }
 
-  private setUser(user: any[]): void {
-    this.user.email = user[0];
-    (this.user.status = user[1]), (this.user.uid = user[2]);
-    this.user.username = user[3];
-    this.setIsHost(user);
+  ngOnDestroy() {
+    console.log("destroy", this.user);
+    if (this.isHost) {
+      this.channelService.updateChannelVideoId(this.channel, "");
+      this.channelService.updateChannelPlayStatus(this.channel.uid, "stop");
+      this.channelService.removeChannelUser(
+        this.channel.uid,
+        this.channel.users,
+        this.user
+      );
+      this.userSubscription.unsubscribe();
+    }
   }
 
-  private setIsHost(user: any[]) {
-    if (`/${user[3]}` === this.router.url) {
-      this.user.isHost = true;
-    } else {
-      this.user.isHost = false;
-    }
+  /**
+   *
+   * Sets the channel property
+   */
+  private setChannel({
+    uid,
+    hostIsOnline,
+    users,
+    status,
+    video,
+  }: Channel): void {
+    this.channel = {
+      uid,
+      hostIsOnline,
+      users: users ? [...users] : null,
+      status: { ...status } || { status: null, timestamp: null },
+      video: video
+        ? {
+            videoId: video.videoId,
+            videoStatus: video.videoStatus,
+            canPlay: video.canPlay,
+            started: video.started,
+            duration: video.duration,
+            currentTime: video.currentTime,
+          }
+        : {},
+    };
+  }
+
+  /**
+   * Sets the user to a clean new object drops all refrences
+   */
+  private setUser({ uid, username, email, isReady, status }: User): void {
+    this.user = {
+      uid,
+      username,
+      email,
+      isReady: isReady || null,
+      status,
+    };
+  }
+
+  /**
+   * Evaluates if user is host of current channel
+   */
+  private setIsHost(username: string): void {
+    console.log(`${username}` === this.router.url.substr(1) ? true : false);
+    this.isHost = `${username}` === this.router.url.substr(1) ? true : false;
   }
 }

@@ -43,9 +43,18 @@ export class AppComponent implements OnInit {
     this.userService.getUsers().subscribe((users) => (this.users = users));
     this.auth.user.subscribe((user) => {
       if (user !== null) {
+        // this.router.navigate([`/${user.username}`]);
       } else {
         this.router.navigate(["/sign-in"]);
       }
     });
+  }
+
+  /**
+   * On sign out button click
+   */
+  async onSignOutClick() {
+    await this.presence.setPresence("offline");
+    this.auth.signOut();
   }
 }
