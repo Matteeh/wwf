@@ -16,7 +16,9 @@ export class PresenceService {
   constructor(
     private afAuth: AngularFireAuth,
     private db: AngularFireDatabase
-  ) {
+  ) {}
+
+  initPresenceSubscriptions() {
     this.updateOnUser().subscribe();
     this.updateOnDisconnect().subscribe();
   }

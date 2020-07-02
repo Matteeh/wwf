@@ -7,7 +7,7 @@ import { AngularFireAuth } from "@angular/fire/auth";
 import { AngularFireDatabase } from "@angular/fire/database";
 
 import { Observable, of } from "rxjs";
-import { switchMap, min } from "rxjs/operators";
+import { switchMap, min, take } from "rxjs/operators";
 
 import { User } from "../models/user.model";
 import { Channel } from "../models/channel.model";
@@ -30,6 +30,10 @@ export class AuthService {
           : of(null);
       })
     );
+  }
+
+  getUser(): Promise<User> {
+    return this.user.pipe(take(1)).toPromise();
   }
 
   async googleSignin() {

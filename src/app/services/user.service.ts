@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { AngularFireDatabase } from "@angular/fire/database";
 import { Observable } from "rxjs";
+import { take } from "rxjs/operators";
 
 @Injectable({
   providedIn: "root",
@@ -13,7 +14,9 @@ export class UserService {
       .list("users", (users) =>
         users.orderByChild("username").equalTo(username)
       )
-      .valueChanges();
+      .valueChanges()
+      .pipe(take(1))
+      .toPromise();
   }
 
   getUsers(): Observable<any> {

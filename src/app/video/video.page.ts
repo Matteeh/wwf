@@ -46,7 +46,7 @@ export class VideoPage implements OnInit, OnDestroy {
   reframed = false;
   videoIsPlaying = false;
 
-  userSubscription: Subscription;
+  subscription: Subscription;
   constructor(
     private youtubeService: YoutubeService,
     private authService: AuthService,
@@ -54,47 +54,29 @@ export class VideoPage implements OnInit, OnDestroy {
     private channelService: ChannelService,
     private router: Router,
     private presence: PresenceService
-  ) {}
+  ) {
+    this.presence.initPresenceSubscriptions();
+  }
 
-  ngOnInit() {
+  async ngOnInit() {
     const channelUid = this.router.url.substr(1);
-    this.userSubscription = this.authService.user
-      .pipe(
-        switchMap((user: User) => {
-          if (!user) {
-            // Navigate away if no user
-            this.router.navigate["/sign-in"];
-          } else {
-            this.setUser(user);
-            this.setIsHost(user.username);
-          }
-          // Check that user actually exists
-          return this.userService.getUserByUsername(channelUid);
-        }),
-        tap(
-          // Navigate away if user not found in db
-          (res) => res.length || this.router.navigate(["/channel-not-found"])
-        ),
-        switchMap(() =>
-          this.channelService.getChannelUsers(channelUid).pipe(take(1))
-        ),
-        // Update channel... Also user ?
-        switchMap((channelUsers: string[]) => {
-          return this.channelService.addChannelUser(
-            channelUid,
-            channelUsers,
-            this.user.uid
-          );
-        }),
-        switchMap(() => this.channelService.getChannel(channelUid))
-      )
+    const [channelUsers] = await Promise.all([
+      this.channelService.getChannelUsers(channelUid),
+      this.validateRoute(channelUid),
+      this.setUser(),
+    ]);
+    this.setIsHost(this.user.username);
+
+    this.subscription = this.channelService
+      .addChannelUser(channelUid, channelUsers, this.user.uid)
+      .pipe(switchMap(() => this.channelService.getChannel(channelUid)))
       .subscribe((channel) => {
         this.setChannel(channel);
         console.log(this.channel);
         if (
           this.channel &&
-          this.channel.status &&
-          this.channel.status.status === "play" &&
+          this.channel.video &&
+          this.channel.video.videoStatus === "play" &&
           this.channel.video.videoId
         ) {
           this.startVideo();
@@ -148,6 +130,7 @@ export class VideoPage implements OnInit, OnDestroy {
    * Hook for youtube video player
    */
   onPlayerReady(event) {
+    console.log(event);
     event.target.playVideo();
   }
 
@@ -230,7 +213,7 @@ export class VideoPage implements OnInit, OnDestroy {
         this.channel.users,
         this.user
       );
-      this.userSubscription.unsubscribe();
+      this.subscription.unsubscribe();
     }
   }
 
@@ -263,17 +246,41 @@ export class VideoPage implements OnInit, OnDestroy {
     };
   }
 
+  private async validateRoute(channelUid) {
+    try {
+      const userExist = await this.userService.getUserByUsername(channelUid);
+      if (!userExist.length) this.router.navigate(["/channel-not-found"]);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   /**
    * Sets the user to a clean new object drops all refrences
    */
-  private setUser({ uid, username, email, isReady, status }: User): void {
-    this.user = {
-      uid,
-      username,
-      email,
-      isReady: isReady || null,
-      status,
-    };
+  private async setUser(): Promise<any> {
+    try {
+      const {
+        uid,
+        username,
+        email,
+        isReady,
+        status,
+      }: User = await this.authService.getUser();
+      if (!uid) {
+        // Navigate away if no user
+        return this.router.navigate["/sign-in"];
+      }
+      this.user = {
+        uid,
+        username,
+        email,
+        isReady: isReady || null,
+        status,
+      };
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   /**

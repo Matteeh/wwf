@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { AngularFireDatabase } from "@angular/fire/database";
-import { Observable } from "rxjs";
+import { Observable, of } from "rxjs";
 import { Channel } from "../models/channel.model";
 import { map, first } from "rxjs/operators";
 import { User } from "../models/user.model";
@@ -27,7 +27,8 @@ export class ChannelService {
       .pipe(
         first(),
         map((channel: Channel[]) => (channel.length ? channel[0].users : []))
-      );
+      )
+      .toPromise();
   }
 
   /**
@@ -38,18 +39,22 @@ export class ChannelService {
     // return channelRef.update();
   }
 
-  addChannelUser(channelUid: string, currentUsers: string[], userUid: string) {
+  addChannelUser(
+    channelUid: string,
+    currentUsers: string[],
+    userUid: string
+  ): Observable<any> {
     const channelRef = this.db.object(`channels/${channelUid}`);
     let users = [];
     if (!currentUsers || !currentUsers.length) {
       users = [userUid];
     } else if (this.arrayContainsUser(userUid, currentUsers)) {
-      return Promise.resolve();
+      return of(null);
     } else {
       users = [...currentUsers, userUid];
     }
 
-    return channelRef.update({ users });
+    return of(channelRef.update({ users }));
   }
 
   removeChannelUser(channelUid: string, currentUsers: string[], user: User) {
@@ -68,22 +73,15 @@ export class ChannelService {
   }
 
   updateChannelVideoId(channel, videoId) {
+    console.log("i run");
     const channelRef = this.db.object(`channels/${channel.uid}`);
-    return channelRef.update({ videoId });
+    return channelRef.update({ video: { videoId: videoId } });
   }
 
   // Play // Pause // Stop
   updateChannelPlayStatus(channelUid: string, status: string) {
     const channelRef = this.db.object(`channels/${channelUid}`);
-    return channelRef.update({ status: { status, timestamp: this.timestamp } });
-  }
-
-  private lookForHostInChannelUsers(users: any[]) {
-    console.log(
-      users.find((users) => users.isHost === true),
-      "lookforhost"
-    );
-    return users.find((users) => users.isHost === true);
+    return channelRef.update({ video: { videoStatus: status } });
   }
 
   /**
