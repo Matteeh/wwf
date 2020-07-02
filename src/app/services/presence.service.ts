@@ -62,7 +62,6 @@ export class PresenceService {
 
   async setPresence(status: string) {
     const user = await this.getUser();
-    console.log(user);
     if (user && user.uid) {
       return this.db
         .object(`users/${user.uid}`)

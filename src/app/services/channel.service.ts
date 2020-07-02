@@ -5,6 +5,7 @@ import { Channel } from "../models/channel.model";
 import { map, first } from "rxjs/operators";
 import { User } from "../models/user.model";
 import * as firebase from "firebase";
+import { removeUndefinedProperties } from "../../helpers/util";
 
 @Injectable({
   providedIn: "root",
@@ -32,29 +33,32 @@ export class ChannelService {
   }
 
   /**
-   * Updates channel with new info
+   * Set channel data
    */
-  updateChannel(channelUid: string) {
-    const channelRef = this.db.object(`channels/${channelUid}`);
-    // return channelRef.update();
+  setChannel(channel: Channel) {
+    const channelRef = this.db.object(`channels/${channel.uid}`);
+    const data: any = removeUndefinedProperties({ ...channel });
+    data.video = removeUndefinedProperties(data.video);
+    console.log("data", data);
+    return channelRef.set({ ...data });
   }
 
   addChannelUser(
     channelUid: string,
     currentUsers: string[],
     userUid: string
-  ): Observable<any> {
+  ): Promise<any> {
     const channelRef = this.db.object(`channels/${channelUid}`);
     let users = [];
     if (!currentUsers || !currentUsers.length) {
       users = [userUid];
     } else if (this.arrayContainsUser(userUid, currentUsers)) {
-      return of(null);
+      return Promise.resolve();
     } else {
       users = [...currentUsers, userUid];
     }
 
-    return of(channelRef.update({ users }));
+    return channelRef.update({ users });
   }
 
   removeChannelUser(channelUid: string, currentUsers: string[], user: User) {

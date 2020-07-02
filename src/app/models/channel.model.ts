@@ -18,5 +18,6 @@ export interface Channel {
     started?: string;
     duration?: number;
     currentTime?: number;
+    isPlaying?: boolean;
   };
 }

@@ -37,16 +37,29 @@ export class VideoPage implements OnInit, OnDestroy {
     status: { status: null, timestamp: null },
   };
 
-  channel: Channel;
-
+  channel: Channel = {
+    uid: null,
+    users: null,
+    hostIsOnline: null,
+    status: { status: null, timestamp: null },
+    video: {
+      canPlay: null,
+      currentTime: null,
+      duration: null,
+      started: null,
+      videoId: null,
+      videoStatus: null,
+      isPlaying: null,
+    },
+  };
   videos: any[] = [];
-  videoId: any;
   YT: any;
   player: any;
   reframed = false;
   videoIsPlaying = false;
+  playerReady = false;
 
-  subscription: Subscription;
+  channelSubscription: Subscription;
   constructor(
     private youtubeService: YoutubeService,
     private authService: AuthService,
@@ -59,27 +72,49 @@ export class VideoPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
+    // Setup youtube iframe listener first
+    window["onYouTubeIframeAPIReady"] = () => this.initPlayer();
     const channelUid = this.router.url.substr(1);
     const [channelUsers] = await Promise.all([
       this.channelService.getChannelUsers(channelUid),
       this.validateRoute(channelUid),
       this.setUser(),
     ]);
+    await this.channelService.addChannelUser(
+      channelUid,
+      channelUsers,
+      this.user.uid
+    );
     this.setIsHost(this.user.username);
 
-    this.subscription = this.channelService
-      .addChannelUser(channelUid, channelUsers, this.user.uid)
-      .pipe(switchMap(() => this.channelService.getChannel(channelUid)))
+    this.channelSubscription = this.channelService
+      .getChannel(channelUid)
       .subscribe((channel) => {
+        if (this.player && this.player["getCurrentTime"]) {
+          /*
+          const currentTime = this.player.getCurrentTime();
+          const duration = this.player.getDuration();
+          if (currentTime && duration) {
+            this.channel.video.currentTime = currentTime;
+            this.channel.video.duration = duration;
+          }
+          */
+        }
         this.setChannel(channel);
         console.log(this.channel);
+
         if (
-          this.channel &&
-          this.channel.video &&
+          this.playerReady &&
           this.channel.video.videoStatus === "play" &&
           this.channel.video.videoId
         ) {
-          this.startVideo();
+          if (!this.channel.video.isPlaying) {
+            this.loadYoutubeVideoById();
+            this.playYoutubeVideo();
+          } else {
+            this.loadYoutubeVideoById();
+            this.playYoutubeVideoAt(this.channel.video.currentTime);
+          }
         }
       });
   }
@@ -88,26 +123,55 @@ export class VideoPage implements OnInit, OnDestroy {
    * Sets the video id locally and in the db
    */
   setVideoId(e) {
-    console.log(e);
-    this.videoId = e;
-    this.channelService.updateChannelVideoId(this.channel, e);
-    console.log(this.videoId);
+    if (this.channel.video) {
+      this.channel.video.videoId = e;
+    } else {
+      this.channel.video = {};
+      this.channel.video.videoId = e;
+    }
+    this.channelService.setChannel(this.channel);
+  }
+
+  playYoutubeVideo() {
+    console.log(this.player);
+    if (this.player && this.player["playVideo"]) {
+      console.log("PLAYER FOUND CALLING PLAYVIDEO", this.channel.video.videoId);
+      this.player.playVideo();
+      if (this.isHost) {
+        this.channel.video.isPlaying = true;
+        this.channelService.setChannel(this.channel);
+      }
+    }
+  }
+
+  playYoutubeVideoAt(time: number) {
+    if (this.player && this.player["playVideoAt"]) {
+      this.player["playVideoAt"](time);
+    }
+  }
+
+  loadYoutubeVideoById() {
+    if (this.player && this.player["loadVideoById"]) {
+      this.player["loadVideoById"](this.channel.video.videoId);
+    }
   }
 
   /**
    * On start video click
    */
   startVideoClick() {
-    this.channelService.updateChannelPlayStatus(this.channel.uid, "play");
+    this.channel.video.videoStatus = "play";
+    this.channelService.setChannel(this.channel);
   }
 
   /**
    * Starts the youtube video player
    */
-  startVideo() {
+  initPlayer() {
+    console.log("INIT YOUTUBE PLAYER");
     this.reframed = false;
     this.player = new window["YT"].Player("player", {
-      videoId: this.channel.video.videoId,
+      videoId: "",
       playerVars: {
         autoplay: 1,
         modestbranding: 1,
@@ -130,8 +194,7 @@ export class VideoPage implements OnInit, OnDestroy {
    * Hook for youtube video player
    */
   onPlayerReady(event) {
-    console.log(event);
-    event.target.playVideo();
+    this.playerReady = true;
   }
 
   /**
@@ -177,15 +240,19 @@ export class VideoPage implements OnInit, OnDestroy {
    * Error handler for the youtube video player
    */
   onPlayerError(event) {
+    // On error stop video and update
+    this.channel.video.videoStatus = "stop";
+    this.channelService.setChannel(this.channel);
+    /*
     switch (event.data) {
       case 2:
-        console.log("" + this.videoId);
         break;
       case 100:
         break;
       case 101 || 150:
         break;
     }
+    */
   }
 
   /**
@@ -204,16 +271,16 @@ export class VideoPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    console.log("destroy", this.user);
     if (this.isHost) {
-      this.channelService.updateChannelVideoId(this.channel, "");
-      this.channelService.updateChannelPlayStatus(this.channel.uid, "stop");
+      this.channel.video.videoId = "";
+      this.channel.video.videoStatus = "stop";
+      this.channelService.setChannel(this.channel);
       this.channelService.removeChannelUser(
         this.channel.uid,
         this.channel.users,
         this.user
       );
-      this.subscription.unsubscribe();
+      this.channelSubscription.unsubscribe();
     }
   }
 

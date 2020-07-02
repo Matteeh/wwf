@@ -92,7 +92,15 @@ export class AuthService {
       users: null,
       hostIsOnline: null,
       status: { status: null, timestamp: null },
-      video: {},
+      video: {
+        canPlay: null,
+        currentTime: null,
+        duration: null,
+        started: null,
+        videoId: null,
+        videoStatus: null,
+        isPlaying: null,
+      },
     };
     // Set is destructive use update
     return channelRef.update(data);

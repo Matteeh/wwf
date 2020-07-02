@@ -15,7 +15,6 @@ export class SearchBarComponent implements OnInit {
    * Emits the searched string on enter key up
    */
   handleSearchValue(e: any) {
-    console.log("i run");
     this.searchValue.emit(e.target.value);
   }
 }
