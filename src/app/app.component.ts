@@ -26,7 +26,6 @@ export class AppComponent implements OnInit {
     private statusBar: StatusBar,
     public auth: AuthService,
     private router: Router,
-    public presence: PresenceService,
     public userService: UserService
   ) {
     this.initializeApp();
