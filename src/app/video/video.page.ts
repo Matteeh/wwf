@@ -124,9 +124,16 @@ export class VideoPage implements OnInit, OnDestroy {
     }
   }
 
-  playYoutubeVideoAt(time: number) {
-    if (this.player && this.player["playVideoAt"]) {
-      this.player["playVideoAt"](time);
+  playerSeekto(time: number) {
+    console.log("I RUN SEEK TO", time);
+    if (this.player && this.player["seekTo"]) {
+      this.player["seekTo"](time);
+    }
+  }
+
+  pauseYoutubeVideo() {
+    if (this.player && this.player["pauseVideo"]) {
+      this.player["pauseVideo"]();
     }
   }
 
@@ -165,6 +172,12 @@ export class VideoPage implements OnInit, OnDestroy {
   onYoutubePlayerStateChange(event) {
     switch (event) {
       case "PLAYING":
+        if (this.isHost) {
+          this.channel.video.videoStatus = "play";
+          this.channel.video.currentTime = this.getCurrentTime();
+          this.channel.video.isPlaying = true;
+          this.channelService.setChannel(this.channel);
+        }
         if (this.getCurrentTime() == 0) {
           console.log("started" + this.getCurrentTime());
         } else {
@@ -173,8 +186,18 @@ export class VideoPage implements OnInit, OnDestroy {
         break;
       case "PAUSED":
         console.log(`paused @ ${this.getCurrentTime()}`);
+        if (this.isHost) {
+          this.channel.video.videoStatus = "pause";
+          this.channel.video.currentTime = this.getCurrentTime();
+          this.channelService.setChannel(this.channel);
+        }
         break;
       case "ENDED":
+        if (this.isHost) {
+          this.channel.video.videoStatus = "end";
+          this.channel.video.currentTime = null;
+          this.channelService.setChannel(this.channel);
+        }
         console.log("ended");
         break;
     }
@@ -215,20 +238,22 @@ export class VideoPage implements OnInit, OnDestroy {
       case "play":
         if (!this.channel.video.isPlaying) {
           this.loadYoutubeVideoById();
-          this.playYoutubeVideo();
+          this.playerSeekto(this.channel.video.currentTime || 0);
         } else {
-          this.loadYoutubeVideoById();
-          this.playYoutubeVideoAt(this.channel.video.currentTime);
+          console.log("PLAYER SEEK TO GONNA BE CALLED");
+          if (this.isHost) {
+            // this.channel.video.currentTime = this.getCurrentTime();
+            // this.channelService.setChannel(this.channel);
+          }
         }
         break;
-      case "paus":
+      case "pause":
+        this.pauseYoutubeVideo();
         break;
       case "stop":
         break;
     }
   }
-
-  private pausYoutubeVideo() {}
 
   /**
    *
