@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { YoutubeService } from "../services/youtube.service";
 import { AuthService } from "../services/auth.service";
-import { Router } from "@angular/router";
+import { Router, ParamMap, ActivatedRoute } from "@angular/router";
 import { UserService } from "../services/user.service";
 import {
   mapTo,
@@ -52,19 +52,15 @@ export class VideoPage implements OnInit, OnDestroy {
       isPlaying: null,
     },
   };
-  videos: any[] = [];
-  YT: any;
   player: any;
-  reframed = false;
-  videoIsPlaying = false;
-  playerReady = false;
-
+  videos: any[] = [];
   channelSubscription: Subscription;
   constructor(
     private youtubeService: YoutubeService,
     private authService: AuthService,
     private userService: UserService,
     private channelService: ChannelService,
+    private route: ActivatedRoute,
     private router: Router,
     private presence: PresenceService
   ) {
@@ -72,39 +68,34 @@ export class VideoPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
-    // Setup youtube iframe listener first
-    window["onYouTubeIframeAPIReady"] = () => this.initPlayer();
-    const channelUid = this.router.url.substr(1);
-    const [channelUsers] = await Promise.all([
-      this.channelService.getChannelUsers(channelUid),
-      this.validateRoute(channelUid),
-      this.setUser(),
-    ]);
-    await this.channelService.addChannelUser(
-      channelUid,
-      channelUsers,
-      this.user.uid
-    );
-    this.setIsHost(this.user.username);
-
-    this.channelSubscription = this.channelService
-      .getChannel(channelUid)
-      .subscribe((channel) => {
-        if (this.player && this.player["getCurrentTime"]) {
-          /*
-          const currentTime = this.player.getCurrentTime();
-          const duration = this.player.getDuration();
-          if (currentTime && duration) {
-            this.channel.video.currentTime = currentTime;
-            this.channel.video.duration = duration;
+    this.route.paramMap
+      .pipe(
+        switchMap((params: ParamMap) => {
+          const channelUid = params.get("id");
+          if (this.channel.uid !== channelUid) {
+            this.channel.uid = channelUid;
           }
-          */
-        }
+          return Promise.all([
+            this.channelService.getChannelUsers(channelUid),
+            this.validateRoute(channelUid),
+            this.setUser(),
+          ]);
+        }),
+        switchMap(([channelUsers]) =>
+          this.channelService.addChannelUser(
+            this.channel.uid,
+            channelUsers,
+            this.user.uid
+          )
+        ),
+        tap(() => this.setIsHost(this.user.username)),
+        switchMap(() => this.channelService.getChannel(this.channel.uid))
+      )
+      .subscribe((channel) => {
         this.setChannel(channel);
         console.log(this.channel);
-
+        console.log(this.player);
         if (
-          this.playerReady &&
           this.channel.video.videoStatus === "play" &&
           this.channel.video.videoId
         ) {
@@ -129,13 +120,12 @@ export class VideoPage implements OnInit, OnDestroy {
       this.channel.video = {};
       this.channel.video.videoId = e;
     }
+    this.channel.video.videoStatus = "play";
     this.channelService.setChannel(this.channel);
   }
 
   playYoutubeVideo() {
-    console.log(this.player);
     if (this.player && this.player["playVideo"]) {
-      console.log("PLAYER FOUND CALLING PLAYVIDEO", this.channel.video.videoId);
       this.player.playVideo();
       if (this.isHost) {
         this.channel.video.isPlaying = true;
@@ -157,105 +147,6 @@ export class VideoPage implements OnInit, OnDestroy {
   }
 
   /**
-   * On start video click
-   */
-  startVideoClick() {
-    this.channel.video.videoStatus = "play";
-    this.channelService.setChannel(this.channel);
-  }
-
-  /**
-   * Starts the youtube video player
-   */
-  initPlayer() {
-    console.log("INIT YOUTUBE PLAYER");
-    this.reframed = false;
-    this.player = new window["YT"].Player("player", {
-      videoId: "",
-      playerVars: {
-        autoplay: 1,
-        modestbranding: 1,
-        controls: 1,
-        disablekb: 1,
-        rel: 0,
-        showinfo: 0,
-        fs: 0,
-        playsinline: 1,
-      },
-      events: {
-        onStateChange: this.onPlayerStateChange.bind(this),
-        onError: this.onPlayerError.bind(this),
-        onReady: this.onPlayerReady.bind(this),
-      },
-    });
-  }
-
-  /**
-   * Hook for youtube video player
-   */
-  onPlayerReady(event) {
-    this.playerReady = true;
-  }
-
-  /**
-   * State handler for the youtube video player
-   */
-  onPlayerStateChange(event) {
-    console.log(event);
-    switch (event.data) {
-      case window["YT"].PlayerState.PLAYING:
-        if (this.cleanTime() == 0) {
-          console.log("started" + this.cleanTime());
-        } else {
-          console.log("playing" + this.cleanTime());
-        }
-        this.videoIsPlaying = true;
-        break;
-      case window["YT"].PlayerState.PAUSED:
-        console.log(this.player);
-        if (
-          this.player.playerInfo.duration -
-            this.player.playerInfo.currentTime !=
-          0
-        ) {
-          console.log("paused" + "@" + this.cleanTime());
-        }
-        // this.videoIsPlaying = false;
-        break;
-      case window["YT"].PlayerState.ENDED:
-        console.log("ended");
-        this.videoIsPlaying = false;
-        break;
-    }
-  }
-
-  /**
-   * Cleans time for the youtube video player
-   */
-  cleanTime() {
-    return Math.round(this.player.playerInfo.currentTime);
-  }
-
-  /**
-   * Error handler for the youtube video player
-   */
-  onPlayerError(event) {
-    // On error stop video and update
-    this.channel.video.videoStatus = "stop";
-    this.channelService.setChannel(this.channel);
-    /*
-    switch (event.data) {
-      case 2:
-        break;
-      case 100:
-        break;
-      case 101 || 150:
-        break;
-    }
-    */
-  }
-
-  /**
    * Handles the user input from the search-bar component
    */
   handleSearchValue(searchValue: string) {
@@ -268,6 +159,50 @@ export class VideoPage implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  /**
+   * Event emitted from youtube component when player is loaded
+   */
+  onYoutubePlayerReady(event) {
+    this.player = event;
+  }
+
+  /**
+   * Event emitted from youtube component on player state changed
+   */
+  onYoutubePlayerStateChange(event) {
+    switch (event) {
+      case event === "PLAYING":
+        if (this.getCurrentTime() == 0) {
+          console.log("started" + this.getCurrentTime());
+        } else {
+          console.log("playing" + this.getCurrentTime());
+        }
+        break;
+      case event === "PAUSED":
+        console.log(`paused @ ${this.getCurrentTime()}`);
+        break;
+      case event === "ENDED":
+        console.log("ended");
+        break;
+    }
+  }
+
+  /**
+   * Event emitted from youtube component on player error
+   */
+  onYoutubePlayerError(event) {
+    // On error stop video and update
+    this.channel.video.videoStatus = "stop";
+    this.channelService.setChannel(this.channel);
+  }
+
+  /**
+   * Get current time
+   */
+  getCurrentTime() {
+    return Math.round(this.player.playerInfo.currentTime);
   }
 
   ngOnDestroy() {
@@ -313,6 +248,9 @@ export class VideoPage implements OnInit, OnDestroy {
     };
   }
 
+  /**
+   * If user not found channel is not valid
+   */
   private async validateRoute(channelUid) {
     try {
       const userExist = await this.userService.getUserByUsername(channelUid);
@@ -358,3 +296,35 @@ export class VideoPage implements OnInit, OnDestroy {
     this.isHost = `${username}` === this.router.url.substr(1) ? true : false;
   }
 }
+
+// console.log("NgOnInit");
+/*
+this.route.paramMap.subscribe((val) =>
+  console.log("paramMap", val.get("id"))
+);*/
+//console.log(params.get('id'));
+
+//const channelUid = this.router.url.substr(1);
+/* const [channelUsers] = await Promise.all([
+  this.channelService.getChannelUsers(channelUid),
+  this.validateRoute(channelUid),
+  this.setUser(),
+]);
+*/
+/*
+await this.channelService.addChannelUser(
+  channelUid,
+  channelUsers,
+  this.user.uid
+);
+
+ console.log("STREAM WORKS", channel);
+        if (this.player && this.player["getCurrentTime"]) {
+          /*
+          const currentTime = this.player.getCurrentTime();
+          const duration = this.player.getDuration();
+          if (currentTime && duration) {
+            this.channel.video.currentTime = currentTime;
+            this.channel.video.duration = duration;
+          }
+          */

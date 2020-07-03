@@ -10,12 +10,6 @@ const routes: Routes = [
     pathMatch: "full",
   },
   {
-    path: "folder/:id",
-    canActivate: [AuthGuard],
-    loadChildren: () =>
-      import("./folder/folder.module").then((m) => m.FolderPageModule),
-  },
-  {
     path: "sign-in",
     loadChildren: () =>
       import("./sign-in/sign-in.module").then((m) => m.SignInPageModule),
@@ -31,7 +25,9 @@ const routes: Routes = [
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules }),
+    RouterModule.forRoot(routes, {
+      preloadingStrategy: PreloadAllModules,
+    }),
   ],
   exports: [RouterModule],
 })

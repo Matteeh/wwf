@@ -25,11 +25,13 @@
           ></app-video-card>
         </ion-col>
       </ion-row>
+      <!--
       <ion-row class="ion-align-items-center ion-justify-content-center">
         <ion-col size="2">
           <ion-button (click)="startVideoClick()">Start Video</ion-button>
         </ion-col>
       </ion-row>
+      -->
     </div>
     <ng-template #guest>
       <ion-row class="ion-align-items-center ion-justify-content-center">
@@ -42,7 +44,11 @@
       class="ion-align-items-center ion-justify-content-center video-player-container"
     >
       <ion-col>
-        <app-youtube-player></app-youtube-player>
+        <app-youtube-player
+          (playerError)="onYoutubePlayerError($event)"
+          (playerStateChange)="onYoutubePlayerStateChange($event)"
+          (youtubePlayer)="onYoutubePlayerReady($event)"
+        ></app-youtube-player>
       </ion-col>
     </ion-row>
   </ion-grid>
