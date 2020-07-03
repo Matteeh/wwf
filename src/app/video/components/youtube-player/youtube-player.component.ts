@@ -40,7 +40,7 @@ export class YoutubePlayerComponent implements OnInit {
     this.player = new window["YT"].Player("player", {
       videoId: "",
       playerVars: {
-        autoplay: 0,
+        autoplay: 1,
         /*
         modestbranding: 1,
         controls: 1,

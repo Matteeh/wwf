@@ -111,6 +111,7 @@ export class VideoPage implements OnInit, OnDestroy {
       this.channel.video = {};
       this.channel.video.videoId = e;
     }
+    this.channel.video.currentTime = 0;
     this.channel.video.videoStatus = "play";
     this.channelService.setChannel(this.channel);
   }
@@ -133,7 +134,7 @@ export class VideoPage implements OnInit, OnDestroy {
         this.channel.video.isPlaying = true;
         this.channelService.setChannel(this.channel);
       }
-      this.player["seekTo"](7, false);
+      this.player["seekTo"](time);
     }
   }
 
@@ -145,6 +146,7 @@ export class VideoPage implements OnInit, OnDestroy {
 
   loadYoutubeVideoById() {
     if (this.player && this.player["loadVideoById"]) {
+      console.log(this.channel, "Load youtube video by id called");
       this.player["loadVideoById"]({
         videoId: this.channel.video.videoId,
         startSeconds: this.channel.video.currentTime || 0,
@@ -232,6 +234,7 @@ export class VideoPage implements OnInit, OnDestroy {
     if (this.isHost) {
       this.channel.video.videoId = "";
       this.channel.video.videoStatus = "stop";
+      this.channel.video.currentTime = 0;
       this.channelService.setChannel(this.channel);
       this.channelService.removeChannelUser(
         this.channel.uid,
