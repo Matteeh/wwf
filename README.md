@@ -2,6 +2,8 @@
 
 Watch with friends
 
+Only supporting Chrome at this stage
+
 # Work in progress
 
 Current status: Usually works to watch videos together as long as the guests are in the channel before the hosts starts the video.
