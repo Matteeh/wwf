@@ -92,11 +92,12 @@ export class VideoPage implements OnInit, OnDestroy {
         switchMap(() => this.channelService.getChannel(this.channel.uid))
       )
       .subscribe((channel) => {
+        console.log("CHANNEL", channel);
         this.setChannel(channel);
-        console.log(this.channel);
         if (this.channel.video.videoId) {
           this.onChannelVideoStatus(this.channel.video.videoStatus);
         }
+        console.log("THISCHANNEL", this.channel);
       });
   }
 
@@ -114,6 +115,7 @@ export class VideoPage implements OnInit, OnDestroy {
     this.channelService.setChannel(this.channel);
   }
 
+  /*
   playYoutubeVideo() {
     if (this.player && this.player["playVideo"]) {
       this.player.playVideo();
@@ -122,12 +124,16 @@ export class VideoPage implements OnInit, OnDestroy {
         this.channelService.setChannel(this.channel);
       }
     }
-  }
+  }*/
 
   playerSeekto(time: number) {
     console.log("I RUN SEEK TO", time);
     if (this.player && this.player["seekTo"]) {
-      this.player["seekTo"](time);
+      if (this.isHost) {
+        this.channel.video.isPlaying = true;
+        this.channelService.setChannel(this.channel);
+      }
+      this.player["seekTo"](7, false);
     }
   }
 
@@ -139,7 +145,10 @@ export class VideoPage implements OnInit, OnDestroy {
 
   loadYoutubeVideoById() {
     if (this.player && this.player["loadVideoById"]) {
-      this.player["loadVideoById"](this.channel.video.videoId);
+      this.player["loadVideoById"]({
+        videoId: this.channel.video.videoId,
+        startSeconds: this.channel.video.currentTime || 0,
+      });
     }
   }
 
@@ -174,7 +183,7 @@ export class VideoPage implements OnInit, OnDestroy {
       case "PLAYING":
         if (this.isHost) {
           this.channel.video.videoStatus = "play";
-          this.channel.video.currentTime = this.getCurrentTime();
+          // this.channel.video.currentTime = this.getCurrentTime();
           this.channel.video.isPlaying = true;
           this.channelService.setChannel(this.channel);
         }
@@ -236,15 +245,12 @@ export class VideoPage implements OnInit, OnDestroy {
   private onChannelVideoStatus(videoStatus: string) {
     switch (videoStatus) {
       case "play":
+        this.loadYoutubeVideoById();
         if (!this.channel.video.isPlaying) {
-          this.loadYoutubeVideoById();
-          this.playerSeekto(this.channel.video.currentTime || 0);
+          //this.playerSeekto(this.channel.video.currentTime || 0);
         } else {
-          console.log("PLAYER SEEK TO GONNA BE CALLED");
-          if (this.isHost) {
-            // this.channel.video.currentTime = this.getCurrentTime();
-            // this.channelService.setChannel(this.channel);
-          }
+          console.log("i run");
+          //this.playerSeekto(this.channel.video.currentTime || 0);
         }
         break;
       case "pause":

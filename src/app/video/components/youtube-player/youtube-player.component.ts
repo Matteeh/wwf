@@ -40,7 +40,8 @@ export class YoutubePlayerComponent implements OnInit {
     this.player = new window["YT"].Player("player", {
       videoId: "",
       playerVars: {
-        autoplay: 1,
+        autoplay: 0,
+        /*
         modestbranding: 1,
         controls: 1,
         disablekb: 1,
@@ -48,6 +49,7 @@ export class YoutubePlayerComponent implements OnInit {
         showinfo: 0,
         fs: 0,
         playsinline: 1,
+        */
       },
       events: {
         onStateChange: this.onPlayerStateChange.bind(this),
@@ -80,7 +82,6 @@ export class YoutubePlayerComponent implements OnInit {
         ) {
           this.playerStateChange.emit("PAUSED");
         }
-
         break;
       case window["YT"].PlayerState.ENDED:
         this.playerStateChange.emit("ENDED");
