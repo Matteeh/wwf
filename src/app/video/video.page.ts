@@ -94,18 +94,8 @@ export class VideoPage implements OnInit, OnDestroy {
       .subscribe((channel) => {
         this.setChannel(channel);
         console.log(this.channel);
-        console.log(this.player);
-        if (
-          this.channel.video.videoStatus === "play" &&
-          this.channel.video.videoId
-        ) {
-          if (!this.channel.video.isPlaying) {
-            this.loadYoutubeVideoById();
-            this.playYoutubeVideo();
-          } else {
-            this.loadYoutubeVideoById();
-            this.playYoutubeVideoAt(this.channel.video.currentTime);
-          }
+        if (this.channel.video.videoId) {
+          this.onChannelVideoStatus(this.channel.video.videoStatus);
         }
       });
   }
@@ -166,6 +156,7 @@ export class VideoPage implements OnInit, OnDestroy {
    */
   onYoutubePlayerReady(event) {
     this.player = event;
+    console.log(this.player);
   }
 
   /**
@@ -173,17 +164,17 @@ export class VideoPage implements OnInit, OnDestroy {
    */
   onYoutubePlayerStateChange(event) {
     switch (event) {
-      case event === "PLAYING":
+      case "PLAYING":
         if (this.getCurrentTime() == 0) {
           console.log("started" + this.getCurrentTime());
         } else {
           console.log("playing" + this.getCurrentTime());
         }
         break;
-      case event === "PAUSED":
+      case "PAUSED":
         console.log(`paused @ ${this.getCurrentTime()}`);
         break;
-      case event === "ENDED":
+      case "ENDED":
         console.log("ended");
         break;
     }
@@ -218,6 +209,26 @@ export class VideoPage implements OnInit, OnDestroy {
       this.channelSubscription.unsubscribe();
     }
   }
+
+  private onChannelVideoStatus(videoStatus: string) {
+    switch (videoStatus) {
+      case "play":
+        if (!this.channel.video.isPlaying) {
+          this.loadYoutubeVideoById();
+          this.playYoutubeVideo();
+        } else {
+          this.loadYoutubeVideoById();
+          this.playYoutubeVideoAt(this.channel.video.currentTime);
+        }
+        break;
+      case "paus":
+        break;
+      case "stop":
+        break;
+    }
+  }
+
+  private pausYoutubeVideo() {}
 
   /**
    *
