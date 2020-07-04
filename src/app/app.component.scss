@@ -5,12 +5,12 @@ ion-menu ion-content {
 ion-menu.md ion-content {
   --padding-start: 8px;
   --padding-end: 8px;
-  --padding-top: 20px;
+  // --padding-top: 20px;
   --padding-bottom: 20px;
 }
 
 ion-menu.md ion-list {
-  padding: 20px 0;
+  padding-bottom: 10px;
 }
 
 ion-menu.md ion-note {
@@ -116,6 +116,11 @@ ion-note {
 
 ion-item.selected {
   --color: var(--ion-color-primary);
+}
+
+.logo-list {
+  --padding-start: 0px;
+  --padding-top: 0px;
 }
 
 .user-item {
