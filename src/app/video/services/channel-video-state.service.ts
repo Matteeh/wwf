@@ -1,5 +1,6 @@
 import { Injectable } from "@angular/core";
 import { YoutubePlayerService } from "./youtube-player.service";
+import { VideoStatus } from "src/app/models/channel.model";
 
 @Injectable({
   providedIn: "root",
@@ -14,16 +15,16 @@ export class ChannelVideoStateService {
     currentTime: number
   ) {
     switch (videoStatus) {
-      case "play":
+      case VideoStatus.PLAY:
         this.onPlay(playerIsPlaying, currentTime);
         break;
-      case "cue":
+      case VideoStatus.CUE:
         this.onCue(videoId, currentTime);
         break;
-      case "pause":
+      case VideoStatus.PAUSE:
         this.onPause();
         break;
-      case "stop":
+      case VideoStatus.STOP:
         this.onStop();
         break;
     }
