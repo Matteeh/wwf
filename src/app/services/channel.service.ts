@@ -21,14 +21,11 @@ export class ChannelService {
     return this.db.object(`channels/${uid}`).valueChanges();
   }
 
-  getChannelUsers(uid) {
+  getChannelAsPromise(uid): Promise<any> {
     return this.db
-      .list("channels", (channels) => channels.orderByChild("uid").equalTo(uid))
+      .object(`channels/${uid}`)
       .valueChanges()
-      .pipe(
-        first(),
-        map((channel: Channel[]) => (channel.length ? channel[0].users : []))
-      )
+      .pipe(first())
       .toPromise();
   }
 
@@ -39,41 +36,37 @@ export class ChannelService {
     const channelRef = this.db.object(`channels/${channel.uid}`);
     const data: any = removeUndefinedProperties({ ...channel });
     data.video = removeUndefinedProperties(data.video);
-    console.log("data", data);
+    // console.log("data", data);
     return channelRef.set({ ...data });
   }
 
-  addChannelUser(
-    channelUid: string,
-    currentUsers: string[],
-    userUid: string
-  ): Promise<any> {
-    const channelRef = this.db.object(`channels/${channelUid}`);
+  addChannelUser(channel: Channel, userUid: string): Promise<any> {
+    console.log(channel);
+    const newChannel = { ...channel };
     let users = [];
-    if (!currentUsers || !currentUsers.length) {
+    if (!newChannel.users || !newChannel.users.length) {
       users = [userUid];
-    } else if (this.arrayContainsUser(userUid, currentUsers)) {
+    } else if (this.arrayContainsUser(userUid, newChannel.users)) {
       return Promise.resolve();
     } else {
-      users = [...currentUsers, userUid];
+      users = [...newChannel.users, userUid];
     }
-
-    return channelRef.update({ users });
+    newChannel.users = users;
+    this.setChannel(newChannel);
   }
 
-  removeChannelUser(channelUid: string, currentUsers: string[], user: User) {
-    console.log("i run remove channel user");
-    const channelRef = this.db.object(`channels/${channelUid}`);
+  async removeChannelUser(channel: Channel, user: User) {
+    const newChannel = { ...channel };
     let users = [];
-    if (!currentUsers || !currentUsers.length) {
+    if (!newChannel.users || !newChannel.users.length) {
       users = [];
-    } else if (!this.arrayContainsUser(user.uid, currentUsers)) {
+    } else if (!this.arrayContainsUser(user.uid, newChannel.users)) {
       return Promise.resolve();
     } else {
-      users = currentUsers.filter((uid: string) => uid === user.uid);
+      users = newChannel.users.filter((uid: string) => uid === user.uid);
     }
-
-    return channelRef.update({ users });
+    newChannel.users = users;
+    return await this.setChannel(newChannel);
   }
 
   updateChannelVideoId(channel, videoId) {

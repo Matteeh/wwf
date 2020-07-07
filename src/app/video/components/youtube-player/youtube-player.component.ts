@@ -6,18 +6,15 @@ import { Component, OnInit, Output, EventEmitter } from "@angular/core";
   styleUrls: ["./youtube-player.component.scss"],
 })
 export class YoutubePlayerComponent implements OnInit {
-  @Output() youtubePlayer = new EventEmitter<any>();
+  @Output() youtubePlayerReady = new EventEmitter<boolean>();
   @Output() playerError = new EventEmitter<any>();
   @Output() playerStateChange = new EventEmitter<string>();
 
-  YT: any;
-  player: any;
-  reframed = false;
-  videoIsPlaying = false;
   constructor() {}
 
   ngOnInit() {
-    window["onYouTubeIframeAPIReady"] = () => this.initPlayer();
+    window["onYouTubeIframeAPIReady"] = () =>
+      this.youtubePlayerReady.emit(true);
     this.IframeApiInit();
   }
 
@@ -30,10 +27,12 @@ export class YoutubePlayerComponent implements OnInit {
     var firstScriptTag = document.getElementsByTagName("script")[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
   }
+}
 
-  /**
+/* 
+ /**
    * Starts the youtube video player
-   */
+   
   initPlayer() {
     console.log("INIT YOUTUBE PLAYER");
     this.reframed = false;
@@ -55,7 +54,7 @@ export class YoutubePlayerComponent implements OnInit {
         showinfo: 0,
         fs: 0,
         playsinline: 1,
-        */
+        
       },
       events: {
         onStateChange: this.onPlayerStateChange.bind(this),
@@ -67,14 +66,14 @@ export class YoutubePlayerComponent implements OnInit {
 
   /**
    * Hook for youtube video player
-   */
+   
   onPlayerReady(event) {
-    this.youtubePlayer.emit(this.player);
+    this.playerStateChange.next("READY");
   }
 
   /**
    * State handler for the youtube video player
-   */
+   
   onPlayerStateChange(event) {
     switch (event.data) {
       case window["YT"].PlayerState.PLAYING:
@@ -97,7 +96,7 @@ export class YoutubePlayerComponent implements OnInit {
 
   /**
    * Error handler for the youtube video player
-   */
+   
   onPlayerError(event) {
     this.playerError.emit(event);
 
@@ -110,6 +109,6 @@ export class YoutubePlayerComponent implements OnInit {
       case 101 || 150:
         break;
     }
-    */
+    
   }
-}
+*/

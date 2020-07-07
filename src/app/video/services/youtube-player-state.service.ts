@@ -7,14 +7,15 @@ import { Channel, VideoStatus } from "src/app/models/channel.model";
 })
 export class YoutubePlayerStateService {
   playerIsPlaying: boolean = false;
-
+  playerIsReady: boolean = false;
   constructor(private channelService: ChannelService) {}
 
   /**
    * Event emitted from youtube component on player error
    */
-  onPlayerError(event, channel: Channel) {
+  onPlayerError(event: string, channel: Channel) {
     // On error stop video and update
+    console.log("ERROR", event);
     channel.video.videoStatus = VideoStatus.STOP;
     this.channelService.setChannel(channel);
   }
@@ -26,6 +27,10 @@ export class YoutubePlayerStateService {
     playerCurrentTime: number
   ) {
     switch (event) {
+      case "READY":
+        this.playerIsReady = true;
+        console.log("YOUTUBE PLAYER IS READY");
+        break;
       case "PLAYING":
         this.onPlaying(isHost, channel, playerCurrentTime);
         break;
@@ -35,6 +40,8 @@ export class YoutubePlayerStateService {
       case "ENDED":
         this.onEnded(isHost, channel);
         break;
+      case "ERROR":
+        this.onPlayerError(event, channel);
     }
   }
 
@@ -47,9 +54,12 @@ export class YoutubePlayerStateService {
     playerCurrentTime: number
   ) {
     if (isHost) {
-      channel.video.videoStatus = VideoStatus.PLAY;
-      channel.video.isPlaying = true;
-      this.channelService.setChannel(channel);
+      this.setChannelVideoData(
+        VideoStatus.PLAY,
+        playerCurrentTime,
+        false,
+        channel
+      );
     }
     this.playerIsPlaying = true;
     if (playerCurrentTime == 0) {
@@ -70,9 +80,12 @@ export class YoutubePlayerStateService {
     this.playerIsPlaying = false;
     console.log(`paused @ ${playerCurrentTime}`);
     if (isHost) {
-      channel.video.videoStatus = VideoStatus.PAUSE;
-      channel.video.currentTime = playerCurrentTime;
-      this.channelService.setChannel(channel);
+      this.setChannelVideoData(
+        VideoStatus.PAUSE,
+        playerCurrentTime,
+        false,
+        channel
+      );
     }
   }
 
@@ -82,9 +95,27 @@ export class YoutubePlayerStateService {
   private onEnded(isHost: boolean, channel: Channel) {
     this.playerIsPlaying = false;
     if (isHost) {
-      channel.video.videoStatus = VideoStatus.STOP;
-      channel.video.currentTime = null;
-      this.channelService.setChannel(channel);
+      this.setChannelVideoData(VideoStatus.STOP, 0, false, channel);
     }
+  }
+
+  /**
+   * Should be moved to another service
+   * @param videoStatus
+   * @param currentTime
+   * @param isPlaying
+   * @param channel
+   */
+  private setChannelVideoData(
+    videoStatus: VideoStatus,
+    currentTime: number,
+    isPlaying: boolean,
+    channel: Channel
+  ) {
+    const c: Channel = { ...channel };
+    c.video.videoStatus = videoStatus;
+    c.video.currentTime = currentTime;
+    c.video.isPlaying = isPlaying;
+    this.channelService.setChannel(c);
   }
 }

@@ -8,10 +8,33 @@ import { User } from "../models/user.model";
 import { Channel, VideoStatus } from "../models/channel.model";
 import { ChannelService } from "../services/channel.service";
 import { PresenceService } from "../services/presence.service";
-import { Subscription, Observable, from, of } from "rxjs";
+import {
+  Subscription,
+  Observable,
+  from,
+  of,
+  Subject,
+  BehaviorSubject,
+} from "rxjs";
 import { YoutubePlayerStateService } from "./services/youtube-player-state.service";
 import { ChannelVideoStateService } from "./services/channel-video-state.service";
 import { YoutubePlayerService } from "./services/youtube-player.service";
+
+const nullChannel = {
+  uid: null,
+  users: null,
+  hostIsOnline: null,
+  status: { status: null, timestamp: null },
+  video: {
+    canPlay: null,
+    currentTime: null,
+    duration: null,
+    started: null,
+    videoId: null,
+    videoStatus: null,
+    isPlaying: null,
+  },
+};
 
 @Component({
   selector: "app-video",
@@ -28,21 +51,8 @@ export class VideoPage implements OnInit, OnDestroy {
     status: { status: null, timestamp: null },
   };
 
-  channel: Channel = {
-    uid: null,
-    users: null,
-    hostIsOnline: null,
-    status: { status: null, timestamp: null },
-    video: {
-      canPlay: null,
-      currentTime: null,
-      duration: null,
-      started: null,
-      videoId: null,
-      videoStatus: null,
-      isPlaying: null,
-    },
-  };
+  channel: Channel = nullChannel;
+  playerReadyWatcher: Subject<any> = new Subject();
   videos: any[] = [];
   channelSubscription: Subscription;
   constructor(
@@ -67,20 +77,46 @@ export class VideoPage implements OnInit, OnDestroy {
           const channelUid = params.get("id");
           // Condition is met initially or on join new channel click
           if (this.channel.uid !== channelUid) {
+            this.channel = nullChannel;
             this.channel.uid = channelUid;
+            // Destroy Player here and re init it
             // Only execute on video page initialization
             return this.initVideoPage(channelUid);
-            // Destroy Player here and re init it
           }
           // Otherwise continue
           return of(null);
         }),
-        switchMap(() => this.channelService.getChannel(this.channel.uid))
+        switchMap(() => {
+          return this.playerReadyWatcher.asObservable();
+        }),
+        switchMap((playerReady) => {
+          // Set player if its not set
+          if (playerReady && !this.playerStateService.playerIsReady) {
+            this.youtubePlayerService.initPlayer();
+          }
+          return this.channelService.getChannel(this.channel.uid);
+        }),
+        switchMap((channel) => {
+          console.log(
+            "CHANNEL",
+            channel,
+            this.playerStateService.playerIsReady
+          );
+          this.setChannel(channel);
+          if (
+            this.channel.video.videoId &&
+            this.playerStateService.playerIsReady
+          ) {
+            return this.setHostCurrentTime();
+          }
+          return of(null);
+        })
       )
-      .subscribe((channel) => {
-        console.log("CHANNEL", channel);
-        this.setChannel(channel);
-        if (this.channel.video.videoId) {
+      .subscribe(() => {
+        if (
+          this.channel.video.videoId &&
+          this.playerStateService.playerIsReady
+        ) {
           const { videoId, videoStatus, currentTime } = this.channel.video;
           this.channelVideoStateService.onStateChange(
             videoId,
@@ -90,6 +126,7 @@ export class VideoPage implements OnInit, OnDestroy {
           );
         }
       });
+    this.onYoutubePlayerStateChange();
   }
 
   /**
@@ -126,20 +163,22 @@ export class VideoPage implements OnInit, OnDestroy {
    * Event emitted from youtube component when player is loaded
    */
   onYoutubePlayerReady(event) {
-    this.youtubePlayerService.setPlayer(event);
+    this.playerReadyWatcher.next(event);
     console.log(event);
   }
 
   /**
    * Event emitted from youtube component on player state changed
    */
-  onYoutubePlayerStateChange(event) {
-    this.playerStateService.onPlayerStateChange(
-      event,
-      this.isHost,
-      this.channel,
-      this.youtubePlayerService.getCurrentTime()
-    );
+  onYoutubePlayerStateChange() {
+    this.youtubePlayerService.playerStateWatcher.subscribe((state) => {
+      this.playerStateService.onPlayerStateChange(
+        state,
+        this.isHost,
+        this.channel,
+        this.youtubePlayerService.getCurrentTime()
+      );
+    });
   }
 
   /**
@@ -149,19 +188,17 @@ export class VideoPage implements OnInit, OnDestroy {
     this.playerStateService.onPlayerError(event, this.channel);
   }
 
-  ngOnDestroy() {
+  async ngOnDestroy() {
     if (this.isHost) {
       this.channel.video.videoId = "";
       this.channel.video.videoStatus = VideoStatus.STOP;
       this.channel.video.currentTime = 0;
       this.channelService.setChannel(this.channel);
-      this.channelService.removeChannelUser(
-        this.channel.uid,
-        this.channel.users,
-        this.user
-      );
-      this.channelSubscription.unsubscribe();
     }
+    await this.channelService.removeChannelUser(this.channel, this.user);
+    this.youtubePlayerService.playerStateWatcher.next();
+    this.youtubePlayerService.playerStateWatcher.unsubscribe();
+    this.channelSubscription.unsubscribe();
   }
 
   /**
@@ -170,20 +207,35 @@ export class VideoPage implements OnInit, OnDestroy {
   private initVideoPage(channelUid: string): Observable<any> {
     return from(
       Promise.all([
-        this.channelService.getChannelUsers(channelUid),
+        this.channelService.getChannelAsPromise(channelUid),
         this.validateRoute(channelUid),
         this.setUser(),
       ])
     ).pipe(
-      switchMap(([channelUsers]) =>
-        this.channelService.addChannelUser(
-          this.channel.uid,
-          channelUsers,
-          this.user.uid
-        )
-      ),
-      tap(() => this.setIsHost(this.user.username))
+      switchMap(([channel]) => {
+        this.setChannel(channel);
+        return this.channelService.addChannelUser(this.channel, this.user.uid);
+      })
     );
+  }
+
+  private async setHostCurrentTime(): Promise<any> {
+    try {
+      if (this.playerStateService.playerIsPlaying) {
+        const currentTime = this.youtubePlayerService.getCurrentTime();
+        if (
+          (this.channel.video.currentTime || 0) + 2 < currentTime &&
+          (this.channel.video.currentTime || 0) - 2 > currentTime
+        ) {
+          if (this.isHost) {
+            this.channel.video.currentTime = this.youtubePlayerService.getCurrentTime();
+            this.channelService.setChannel(this.channel);
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   /**
@@ -199,7 +251,7 @@ export class VideoPage implements OnInit, OnDestroy {
   }: Channel): void {
     this.channel = {
       uid,
-      hostIsOnline,
+      hostIsOnline: hostIsOnline ? true : false,
       users: users ? [...users] : null,
       status: { ...status } || { status: null, timestamp: null },
       video: video
@@ -250,6 +302,7 @@ export class VideoPage implements OnInit, OnDestroy {
         isReady: isReady || null,
         status,
       };
+      this.setIsHost(username);
     } catch (err) {
       console.error(err);
     }
@@ -259,7 +312,10 @@ export class VideoPage implements OnInit, OnDestroy {
    * Evaluates if user is host of current channel
    */
   private setIsHost(username: string): void {
-    console.log(`${username}` === this.router.url.substr(1) ? true : false);
+    console.log(
+      "IS HOST :",
+      `${username}` === this.router.url.substr(1) ? true : false
+    );
     this.isHost = `${username}` === this.router.url.substr(1) ? true : false;
   }
 }

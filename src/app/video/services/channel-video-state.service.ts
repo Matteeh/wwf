@@ -1,12 +1,16 @@
 import { Injectable } from "@angular/core";
 import { YoutubePlayerService } from "./youtube-player.service";
 import { VideoStatus } from "src/app/models/channel.model";
+import { YoutubePlayerStateService } from "./youtube-player-state.service";
 
 @Injectable({
   providedIn: "root",
 })
 export class ChannelVideoStateService {
-  constructor(private youtubePlayerService: YoutubePlayerService) {}
+  constructor(
+    private youtubePlayerService: YoutubePlayerService,
+    private youtubePlayerStateService: YoutubePlayerStateService
+  ) {}
 
   onStateChange(
     videoId: string,
@@ -16,7 +20,7 @@ export class ChannelVideoStateService {
   ) {
     switch (videoStatus) {
       case VideoStatus.PLAY:
-        this.onPlay(playerIsPlaying, currentTime);
+        this.onPlay(videoId, playerIsPlaying, currentTime);
         break;
       case VideoStatus.CUE:
         this.onCue(videoId, currentTime);
@@ -30,18 +34,27 @@ export class ChannelVideoStateService {
     }
   }
 
-  private onPlay(playerIsPlaying: boolean, currentTime: number) {
-    if (!playerIsPlaying) {
+  private onPlay(
+    videoId: string,
+    playerIsPlaying: boolean,
+    currentTime: number
+  ) {
+    if (this.youtubePlayerStateService.playerIsReady && !playerIsPlaying) {
+      if (!this.youtubePlayerService.getVideoData().title) {
+        return this.loadByIdAndPlay(videoId, currentTime);
+      }
       this.youtubePlayerService.seekTo(currentTime || 0);
       this.youtubePlayerService.play();
-    } else {
+    } else if (
+      this.youtubePlayerStateService.playerIsReady &&
+      playerIsPlaying
+    ) {
       this.youtubePlayerService.seekTo(currentTime || 0);
     }
   }
 
   private onCue(videoId: string, startSeconds: number) {
-    this.youtubePlayerService.loadVideoById(videoId, startSeconds);
-    this.youtubePlayerService.play();
+    this.loadByIdAndPlay(videoId, startSeconds);
   }
 
   private onPause() {
@@ -49,4 +62,9 @@ export class ChannelVideoStateService {
   }
 
   private onStop() {}
+
+  private loadByIdAndPlay(videoId: string, startSeconds: number) {
+    this.youtubePlayerService.loadVideoById(videoId, startSeconds);
+    this.youtubePlayerService.play();
+  }
 }
