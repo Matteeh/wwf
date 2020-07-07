@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { ChannelService } from "src/app/services/channel.service";
-import { Channel } from "src/app/models/channel.model";
+import { Channel, VideoStatus } from "src/app/models/channel.model";
 
 @Injectable({
   providedIn: "root",
@@ -13,9 +13,9 @@ export class YoutubePlayerStateService {
   /**
    * Event emitted from youtube component on player error
    */
-  onPlayerError(event, channel) {
+  onPlayerError(event, channel: Channel) {
     // On error stop video and update
-    channel.video.videoStatus = "stop";
+    channel.video.videoStatus = VideoStatus.STOP;
     this.channelService.setChannel(channel);
   }
 
@@ -47,7 +47,7 @@ export class YoutubePlayerStateService {
     playerCurrentTime: number
   ) {
     if (isHost) {
-      channel.video.videoStatus = "play";
+      channel.video.videoStatus = VideoStatus.PLAY;
       channel.video.isPlaying = true;
       this.channelService.setChannel(channel);
     }
@@ -70,7 +70,7 @@ export class YoutubePlayerStateService {
     this.playerIsPlaying = false;
     console.log(`paused @ ${playerCurrentTime}`);
     if (isHost) {
-      channel.video.videoStatus = "pause";
+      channel.video.videoStatus = VideoStatus.PAUSE;
       channel.video.currentTime = playerCurrentTime;
       this.channelService.setChannel(channel);
     }
@@ -82,7 +82,7 @@ export class YoutubePlayerStateService {
   private onEnded(isHost: boolean, channel: Channel) {
     this.playerIsPlaying = false;
     if (isHost) {
-      channel.video.videoStatus = "end";
+      channel.video.videoStatus = VideoStatus.STOP;
       channel.video.currentTime = null;
       this.channelService.setChannel(channel);
     }

@@ -10,7 +10,7 @@ export interface Channel {
   video: {
     videoId?: string;
     //playing,paused,stopped
-    videoStatus?: string;
+    videoStatus?: VideoStatus;
     // Users are ready to play video
     canPlay?: boolean;
     // isPlaying: boolean;
@@ -20,4 +20,11 @@ export interface Channel {
     currentTime?: number;
     isPlaying?: boolean;
   };
+}
+
+export enum VideoStatus {
+  PLAY = "PLAY",
+  CUE = "CUE",
+  PAUSE = "PAUSE",
+  STOP = "STOP",
 }

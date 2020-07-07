@@ -14,23 +14,11 @@ export class YoutubePlayerService {
   play() {
     if (this.player && this.player["playVideo"]) {
       this.player.playVideo();
-      /*
-      if (this.isHost) {
-        this.channel.video.isPlaying = true;
-        this.channelService.setChannel(this.channel);
-      }
-      */
     }
   }
 
   seekTo(time: number) {
     if (this.player && this.player["seekTo"]) {
-      /*
-      if (this.isHost) {
-        this.channel.video.isPlaying = true;
-        this.channelService.setChannel(this.channel);
-      }
-      */
       this.player["seekTo"](time, true);
     }
   }

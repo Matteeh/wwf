@@ -3,20 +3,9 @@ import { YoutubeService } from "../services/youtube.service";
 import { AuthService } from "../services/auth.service";
 import { Router, ParamMap, ActivatedRoute } from "@angular/router";
 import { UserService } from "../services/user.service";
-import {
-  mapTo,
-  switchMap,
-  debounceTime,
-  takeLast,
-  delay,
-  tap,
-  takeWhile,
-  takeUntil,
-  first,
-  take,
-} from "rxjs/operators";
+import { switchMap, tap } from "rxjs/operators";
 import { User } from "../models/user.model";
-import { Channel } from "../models/channel.model";
+import { Channel, VideoStatus } from "../models/channel.model";
 import { ChannelService } from "../services/channel.service";
 import { PresenceService } from "../services/presence.service";
 import { Subscription, Observable, from, of } from "rxjs";
@@ -30,7 +19,6 @@ import { YoutubePlayerService } from "./services/youtube-player.service";
   styleUrls: ["./video.page.scss"],
 })
 export class VideoPage implements OnInit, OnDestroy {
-  counter: number = 0;
   isHost = false;
   user: User = {
     username: null,
@@ -55,8 +43,6 @@ export class VideoPage implements OnInit, OnDestroy {
       isPlaying: null,
     },
   };
-  player: any;
-  playerIsPlaying = false;
   videos: any[] = [];
   channelSubscription: Subscription;
   constructor(
@@ -75,7 +61,7 @@ export class VideoPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
-    this.route.paramMap
+    this.channelSubscription = this.route.paramMap
       .pipe(
         switchMap((params: ParamMap) => {
           const channelUid = params.get("id");
@@ -117,7 +103,7 @@ export class VideoPage implements OnInit, OnDestroy {
       this.channel.video.videoId = e;
     }
     this.channel.video.currentTime = 0;
-    this.channel.video.videoStatus = "cue";
+    this.channel.video.videoStatus = VideoStatus.CUE;
     this.channelService.setChannel(this.channel);
   }
 
@@ -140,9 +126,8 @@ export class VideoPage implements OnInit, OnDestroy {
    * Event emitted from youtube component when player is loaded
    */
   onYoutubePlayerReady(event) {
-    this.player = event;
     this.youtubePlayerService.setPlayer(event);
-    console.log(this.player);
+    console.log(event);
   }
 
   /**
@@ -167,7 +152,7 @@ export class VideoPage implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.isHost) {
       this.channel.video.videoId = "";
-      this.channel.video.videoStatus = "stop";
+      this.channel.video.videoStatus = VideoStatus.STOP;
       this.channel.video.currentTime = 0;
       this.channelService.setChannel(this.channel);
       this.channelService.removeChannelUser(
