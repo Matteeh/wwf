@@ -14,6 +14,8 @@ import { VideoCardComponent } from "./components/video-card/video-card.component
 import { UserService } from "../services/user.service";
 import { YoutubePlayerComponent } from "./components/youtube-player/youtube-player.component";
 import { PresenceService } from "../services/presence.service";
+import { YoutubePlayerStateService } from "./services/youtube-player-state.service";
+import { ChannelVideoStateService } from "./services/channel-video-state.service";
 
 @NgModule({
   imports: [
@@ -23,7 +25,14 @@ import { PresenceService } from "../services/presence.service";
     VideoPageRoutingModule,
     HttpClientModule,
   ],
-  providers: [YoutubeService, UserService, PresenceService],
+  providers: [
+    YoutubeService,
+    UserService,
+    PresenceService,
+    YoutubeService,
+    YoutubePlayerStateService,
+    ChannelVideoStateService,
+  ],
   declarations: [
     VideoPage,
     SearchBarComponent,
