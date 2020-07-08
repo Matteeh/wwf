@@ -4,9 +4,9 @@ import { FormsModule } from "@angular/forms";
 
 import { IonicModule } from "@ionic/angular";
 
-import { VideoPageRoutingModule } from "./video-routing.module";
+import { ChannelPageRoutingModule } from "./channel-routing.module";
 
-import { VideoPage } from "./video.page";
+import { ChannelPage } from "./channel.page";
 import { SearchBarComponent } from "./components/search-bar/search-bar.component";
 import { YoutubeService } from "../services/youtube.service";
 import { HttpClientModule } from "@angular/common/http";
@@ -16,13 +16,14 @@ import { YoutubePlayerComponent } from "./components/youtube-player/youtube-play
 import { PresenceService } from "../services/presence.service";
 import { YoutubePlayerStateService } from "./services/youtube-player-state.service";
 import { ChannelVideoStateService } from "./services/channel-video-state.service";
+import { ChannelPageService } from "./services/channel-page.service";
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    VideoPageRoutingModule,
+    ChannelPageRoutingModule,
     HttpClientModule,
   ],
   providers: [
@@ -32,12 +33,13 @@ import { ChannelVideoStateService } from "./services/channel-video-state.service
     YoutubeService,
     YoutubePlayerStateService,
     ChannelVideoStateService,
+    ChannelPageService,
   ],
   declarations: [
-    VideoPage,
+    ChannelPage,
     SearchBarComponent,
     VideoCardComponent,
     YoutubePlayerComponent,
   ],
 })
-export class VideoPageModule {}
+export class ChannelPageModule {}

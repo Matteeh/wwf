@@ -19,7 +19,7 @@ const routes: Routes = [
     path: ":id",
     canActivate: [AuthGuard],
     loadChildren: () =>
-      import("./video/video.module").then((m) => m.VideoPageModule),
+      import("./channel/channel.module").then((m) => m.ChannelPageModule),
   },
 ];
 

@@ -7,12 +7,33 @@ import { Subject } from "rxjs";
 export class YoutubePlayerService {
   player: any;
   playerStateWatcher: Subject<string> = new Subject();
-  constructor() {}
+  iframeInitialized = false;
+  constructor() {
+    window["onYouTubeIframeAPIReady"] = () =>
+      this.playerStateWatcher.next("IFRAME_READY");
+    this.IframeApiInit();
+  }
+
+  /**
+   * Initialize the youtube iframe api
+   */
+  IframeApiInit() {
+    if (!this.iframeInitialized) {
+      var tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      this.iframeInitialized = true;
+    } else {
+      window["onYouTubeIframeAPIReady"]();
+    }
+  }
 
   /**
    * Starts the youtube video player
    */
   initPlayer() {
+    console.log("i run on join user");
     this.player = new window["YT"].Player("player", {
       videoId: "",
       playerVars: {
@@ -35,12 +56,12 @@ export class YoutubePlayerService {
    * Hook for youtube video player
    */
   onPlayerReady() {
+    console.log(this.player);
     this.playerStateWatcher.next("READY");
   }
 
   /**
    * State handler for the youtube video player
-   * Should be moved to state service
    */
   onPlayerStateChange(event) {
     switch (event.data) {
@@ -55,6 +76,7 @@ export class YoutubePlayerService {
         ) {
           this.playerStateWatcher.next("PAUSED");
         }
+        this.playerStateWatcher.next("ENDED");
         break;
       case window["YT"].PlayerState.ENDED:
         this.playerStateWatcher.next("ENDED");
@@ -105,7 +127,9 @@ export class YoutubePlayerService {
    * Get current time
    */
   getCurrentTime() {
-    return Math.round(this.player.playerInfo.currentTime);
+    if (this.player) {
+      return Math.round(this.player.playerInfo.currentTime);
+    }
   }
 
   getVideoData() {

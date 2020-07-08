@@ -1,12 +1,12 @@
 import { NgModule } from "@angular/core";
 import { Routes, RouterModule } from "@angular/router";
 
-import { VideoPage } from "./video.page";
+import { ChannelPage } from "./channel.page";
 
 const routes: Routes = [
   {
     path: "",
-    component: VideoPage,
+    component: ChannelPage,
   },
   {
     path: ":id",
@@ -17,4 +17,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
-export class VideoPageRoutingModule {}
+export class ChannelPageRoutingModule {}

@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { ChannelService } from "src/app/services/channel.service";
 import { Channel, VideoStatus } from "src/app/models/channel.model";
+import { YoutubePlayerService } from "./youtube-player.service";
 
 @Injectable({
   providedIn: "root",
@@ -8,7 +9,10 @@ import { Channel, VideoStatus } from "src/app/models/channel.model";
 export class YoutubePlayerStateService {
   playerIsPlaying: boolean = false;
   playerIsReady: boolean = false;
-  constructor(private channelService: ChannelService) {}
+  constructor(
+    private channelService: ChannelService,
+    private youtubePlayerService: YoutubePlayerService
+  ) {}
 
   /**
    * Event emitted from youtube component on player error
@@ -27,6 +31,9 @@ export class YoutubePlayerStateService {
     playerCurrentTime: number
   ) {
     switch (event) {
+      case "IFRAME_READY":
+        this.youtubePlayerService.initPlayer();
+        break;
       case "READY":
         this.playerIsReady = true;
         console.log("YOUTUBE PLAYER IS READY");
