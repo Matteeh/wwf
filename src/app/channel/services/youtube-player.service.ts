@@ -33,7 +33,6 @@ export class YoutubePlayerService {
    * Starts the youtube video player
    */
   initPlayer() {
-    console.log("i run on join user");
     this.player = new window["YT"].Player("player", {
       videoId: "",
       playerVars: {
@@ -56,7 +55,6 @@ export class YoutubePlayerService {
    * Hook for youtube video player
    */
   onPlayerReady() {
-    console.log(this.player);
     this.playerStateWatcher.next("READY");
   }
 

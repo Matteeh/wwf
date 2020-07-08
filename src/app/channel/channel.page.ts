@@ -7,13 +7,12 @@ import {
   ActivatedRoute,
   NavigationEnd,
 } from "@angular/router";
-import { UserService } from "../services/user.service";
 import { switchMap, tap, takeUntil } from "rxjs/operators";
 import { User } from "../models/user.model";
 import { Channel, VideoStatus } from "../models/channel.model";
 import { ChannelService } from "../services/channel.service";
 import { PresenceService } from "../services/presence.service";
-import { Subscription, Observable, from, of, Subject } from "rxjs";
+import { of, Subject } from "rxjs";
 import { YoutubePlayerStateService } from "./services/youtube-player-state.service";
 import { ChannelVideoStateService } from "./services/channel-video-state.service";
 import { YoutubePlayerService } from "./services/youtube-player.service";
@@ -56,8 +55,6 @@ export class ChannelPage implements OnInit, OnDestroy {
 
   constructor(
     private youtubeService: YoutubeService,
-    private authService: AuthService,
-    private userService: UserService,
     private channelService: ChannelService,
     private route: ActivatedRoute,
     private router: Router,
@@ -83,31 +80,12 @@ export class ChannelPage implements OnInit, OnDestroy {
           // Otherwise continue
           return of(null);
         }),
-        tap(([user]) => {
-          if (user) {
-            this.isHost = this.channelPageService.getIsHost(
-              user.username,
-              this.router.url
-            );
-            this.user = user;
-          }
-        }),
+        tap(([user]) => this.setUserAndIsHost(user)),
         switchMap(() => {
           return this.channelService.getChannel(this.channel.uid);
         }),
         tap((channel) => {
-          console.log(
-            "CHANNEL",
-            channel,
-            this.playerStateService.playerIsReady
-          );
           this.channel = this.channelPageService.getChannel(channel);
-          if (
-            this.channel.video.videoId &&
-            this.playerStateService.playerIsReady
-          ) {
-            // return this.setHostCurrentTime();
-          }
         }),
         takeUntil(this.unsubscribe)
       )
@@ -116,12 +94,10 @@ export class ChannelPage implements OnInit, OnDestroy {
           this.channel.video.videoId &&
           this.playerStateService.playerIsReady
         ) {
-          const { videoId, videoStatus, currentTime } = this.channel.video;
           this.channelVideoStateService.onStateChange(
-            videoId,
-            videoStatus,
+            this.channel,
             this.playerStateService.playerIsPlaying,
-            currentTime
+            this.isHost
           );
         }
       });
@@ -180,7 +156,18 @@ export class ChannelPage implements OnInit, OnDestroy {
     this.unsubscribe.complete();
   }
 
-  /*private reInitYoutubePlayer() {
+  private setUserAndIsHost(user: User) {
+    if (user) {
+      this.isHost = this.channelPageService.getIsHost(
+        user.username,
+        this.router.url
+      );
+      this.user = user;
+    }
+  }
+}
+
+/*private reInitYoutubePlayer() {
     this.destroyYoutube = true;
     this.changeDetector.detectChanges();
     this.destroyYoutube = false;
@@ -190,4 +177,3 @@ export class ChannelPage implements OnInit, OnDestroy {
     this.playerStateService.playerIsReady = false;
     this.youtubePlayerService.IframeApiInit();
   }*/
-}

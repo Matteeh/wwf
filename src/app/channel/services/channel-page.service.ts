@@ -7,7 +7,6 @@ import { UserService } from "src/app/services/user.service";
 import { User } from "src/app/models/user.model";
 import { AuthService } from "src/app/services/auth.service";
 import { Router } from "@angular/router";
-import { YoutubeService } from "src/app/services/youtube.service";
 
 @Injectable({
   providedIn: "root",
@@ -17,7 +16,6 @@ export class ChannelPageService {
     private channelService: ChannelService,
     private userService: UserService,
     private authService: AuthService,
-    private youtubeService: YoutubeService,
     private router: Router
   ) {}
 
