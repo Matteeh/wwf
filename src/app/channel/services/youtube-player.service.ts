@@ -11,29 +11,26 @@ export class YoutubePlayerService {
   constructor() {
     window["onYouTubeIframeAPIReady"] = () =>
       this.playerStateWatcher.next("IFRAME_READY");
-    this.IframeApiInit();
   }
 
   /**
    * Initialize the youtube iframe api
    */
   IframeApiInit() {
-    if (!this.iframeInitialized) {
-      var tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      var firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-      this.iframeInitialized = true;
-    } else {
-      window["onYouTubeIframeAPIReady"]();
-    }
+    var tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName("script")[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    this.iframeInitialized = true;
   }
 
   /**
    * Starts the youtube video player
    */
-  initPlayer() {
-    this.player = new window["YT"].Player("player", {
+  createPlayer(channelUid: string) {
+    console.log("creating player");
+    this.player = null;
+    this.player = new window["YT"].Player(channelUid, {
       videoId: "",
       playerVars: {
         autoplay: 0,

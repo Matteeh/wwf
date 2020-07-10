@@ -44,7 +44,7 @@
       class="ion-align-items-center ion-justify-content-center video-player-container"
     >
       <ion-col>
-        <app-youtube-player *ngIf="!destroyYoutube"></app-youtube-player>
+        <app-youtube-player [playerId]="channelUid"></app-youtube-player>
       </ion-col>
     </ion-row>
   </ion-grid>

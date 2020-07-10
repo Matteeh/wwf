@@ -50,6 +50,7 @@ export class ChannelPage implements OnInit, OnDestroy {
   };
   destroyYoutube = false;
   channel: Channel = nullChannel;
+  channelUid: string;
   videos: any[] = [];
   unsubscribe: Subject<null> = new Subject<null>();
 
@@ -68,6 +69,8 @@ export class ChannelPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
+    console.log("NG ON INIT CHANNEL");
+    this.channelUid = this.route.snapshot.paramMap.get("id");
     this.route.paramMap
       .pipe(
         switchMap((params: ParamMap) => {
@@ -75,10 +78,12 @@ export class ChannelPage implements OnInit, OnDestroy {
           // Condition is met initially or on join new channel click
           if (this.channel.uid !== channelUid) {
             this.channel.uid = channelUid;
+            window["YT"] = null;
+            this.youtubePlayerService.IframeApiInit();
             return this.channelPageService.onChannelPageInit(channelUid);
           }
           // Otherwise continue
-          return of(null);
+          return of([null]);
         }),
         tap(([user]) => this.setUserAndIsHost(user)),
         switchMap(() => {

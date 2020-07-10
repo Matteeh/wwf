@@ -32,11 +32,11 @@ export class YoutubePlayerStateService {
   ) {
     switch (event) {
       case "IFRAME_READY":
-        this.youtubePlayerService.initPlayer();
+        console.log("IFRAME READY");
+        this.youtubePlayerService.createPlayer(channel.uid);
         break;
       case "READY":
         this.playerIsReady = true;
-        console.log("YOUTUBE PLAYER IS READY");
         break;
       case "PLAYING":
         this.onPlaying(isHost, channel, playerCurrentTime);

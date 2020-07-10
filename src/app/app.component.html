@@ -27,8 +27,13 @@
           >
             <ion-icon
               slot="start"
-              ios="person-outline"
-              md="person-outline"
+              ios="ellipse"
+              md="ellipse"
+              [color]="
+                user && user.status && user.status.status == 'online'
+                  ? 'success'
+                  : 'danger'
+              "
             ></ion-icon>
             <ion-label>{{ user.username }}</ion-label>
             <ion-chip
