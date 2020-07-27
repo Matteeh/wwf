@@ -1,7 +1,12 @@
 import { Injectable } from "@angular/core";
 import { ChannelService } from "src/app/services/channel.service";
-import { Channel, VideoStatus } from "src/app/models/channel.model";
+import {
+  Channel,
+  VideoStatus,
+  ChannelVideo,
+} from "src/app/models/channel.model";
 import { YoutubePlayerService } from "./youtube-player.service";
+import { ChannelVideoService } from "src/app/services/channel-video.service";
 
 @Injectable({
   providedIn: "root",
@@ -11,44 +16,48 @@ export class YoutubePlayerStateService {
   playerIsReady: boolean = false;
   constructor(
     private channelService: ChannelService,
+    private channelVideoService: ChannelVideoService,
     private youtubePlayerService: YoutubePlayerService
   ) {}
 
   /**
    * Event emitted from youtube component on player error
    */
-  onPlayerError(event: string, channel: Channel) {
+  onPlayerError(event: string, channelUid: string, channelVideo: ChannelVideo) {
     // On error stop video and update
     console.log("ERROR", event);
-    channel.video.videoStatus = VideoStatus.STOP;
-    this.channelService.setChannel(channel);
+    channelVideo.videoStatus = VideoStatus.STOP;
+    this.channelVideoService.updateChannelVideo(channelUid, {
+      ...channelVideo,
+    });
   }
 
   onPlayerStateChange(
     event: string,
+    channelUid: string,
     isHost: boolean,
-    channel: Channel,
+    channelVideo: ChannelVideo,
     playerCurrentTime: number
   ) {
     switch (event) {
       case "IFRAME_READY":
         console.log("IFRAME READY");
-        this.youtubePlayerService.createPlayer(channel.uid);
+        this.youtubePlayerService.createPlayer(channelUid);
         break;
       case "READY":
         this.playerIsReady = true;
         break;
       case "PLAYING":
-        this.onPlaying(isHost, channel, playerCurrentTime);
+        this.onPlaying(isHost, channelUid, channelVideo, playerCurrentTime);
         break;
       case "PAUSED":
-        this.onPaused(isHost, channel, playerCurrentTime);
+        this.onPaused(isHost, channelUid, channelVideo, playerCurrentTime);
         break;
       case "ENDED":
-        this.onEnded(isHost, channel);
+        this.onEnded(isHost, channelUid, channelVideo);
         break;
       case "ERROR":
-        this.onPlayerError(event, channel);
+        this.onPlayerError(event, channelUid, channelVideo);
     }
   }
 
@@ -57,15 +66,17 @@ export class YoutubePlayerStateService {
    */
   private onPlaying(
     isHost: boolean,
-    channel: Channel,
+    channelUid: string,
+    channelVideo: ChannelVideo,
     playerCurrentTime: number
   ) {
     if (isHost) {
       this.setChannelVideoData(
         VideoStatus.PLAY,
         playerCurrentTime,
-        false,
-        channel
+        true,
+        channelUid,
+        channelVideo
       );
     }
     this.playerIsPlaying = true;
@@ -81,7 +92,8 @@ export class YoutubePlayerStateService {
    */
   private onPaused(
     isHost: boolean,
-    channel: Channel,
+    channelUid: string,
+    channelVideo: ChannelVideo,
     playerCurrentTime: number
   ) {
     this.playerIsPlaying = false;
@@ -91,7 +103,8 @@ export class YoutubePlayerStateService {
         VideoStatus.PAUSE,
         playerCurrentTime,
         false,
-        channel
+        channelUid,
+        channelVideo
       );
     }
   }
@@ -99,10 +112,20 @@ export class YoutubePlayerStateService {
   /**
    * On Youtube player ended state
    */
-  private onEnded(isHost: boolean, channel: Channel) {
+  private onEnded(
+    isHost: boolean,
+    channelUid: string,
+    channelVideo: ChannelVideo
+  ) {
     this.playerIsPlaying = false;
     if (isHost) {
-      this.setChannelVideoData(VideoStatus.STOP, 0, false, channel);
+      this.setChannelVideoData(
+        VideoStatus.STOP,
+        0,
+        false,
+        channelUid,
+        channelVideo
+      );
     }
   }
 
@@ -117,12 +140,13 @@ export class YoutubePlayerStateService {
     videoStatus: VideoStatus,
     currentTime: number,
     isPlaying: boolean,
-    channel: Channel
+    channelUid: string,
+    channelVideo: ChannelVideo
   ) {
-    const c: Channel = { ...channel };
-    c.video.videoStatus = videoStatus;
-    c.video.currentTime = currentTime;
-    c.video.isPlaying = isPlaying;
-    this.channelService.setChannel(c);
+    const chVideo: ChannelVideo = { ...channelVideo };
+    chVideo.videoStatus = videoStatus;
+    chVideo.currentTime = currentTime;
+    chVideo.isPlaying = isPlaying;
+    this.channelVideoService.updateChannelVideo(channelUid, chVideo);
   }
 }

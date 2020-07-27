@@ -6,7 +6,8 @@ import { Subject } from "rxjs";
 })
 export class YoutubePlayerService {
   player: any;
-  playerStateWatcher: Subject<string> = new Subject();
+  // Create a new watcher from the component life cycle hook
+  playerStateWatcher: Subject<string>;
   iframeInitialized = false;
   constructor() {
     window["onYouTubeIframeAPIReady"] = () =>
@@ -17,6 +18,7 @@ export class YoutubePlayerService {
    * Initialize the youtube iframe api
    */
   IframeApiInit() {
+    window["YT"] = null;
     var tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
     var firstScriptTag = document.getElementsByTagName("script")[0];
@@ -39,6 +41,7 @@ export class YoutubePlayerService {
         fs: 1,
         disablekb: 0,
         enablejsapi: 1,
+        showinfo: 0,
       },
       events: {
         onStateChange: this.onPlayerStateChange.bind(this),
@@ -52,6 +55,7 @@ export class YoutubePlayerService {
    * Hook for youtube video player
    */
   onPlayerReady() {
+    // this.player.
     this.playerStateWatcher.next("READY");
   }
 

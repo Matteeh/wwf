@@ -40,35 +40,6 @@ export class ChannelService {
     return channelRef.set({ ...data });
   }
 
-  addChannelUser(channel: Channel, userUid: string): Promise<any> {
-    console.log(channel);
-    const newChannel = { ...channel };
-    let users = [];
-    if (!newChannel.users || !newChannel.users.length) {
-      users = [userUid];
-    } else if (this.arrayContainsUser(userUid, newChannel.users)) {
-      return Promise.resolve();
-    } else {
-      users = [...newChannel.users, userUid];
-    }
-    newChannel.users = users;
-    this.setChannel(newChannel);
-  }
-
-  async removeChannelUser(channel: Channel, user: User) {
-    const newChannel = { ...channel };
-    let users = [];
-    if (!newChannel.users || !newChannel.users.length) {
-      users = [];
-    } else if (!this.arrayContainsUser(user.uid, newChannel.users)) {
-      return Promise.resolve();
-    } else {
-      users = newChannel.users.filter((uid: string) => uid === user.uid);
-    }
-    newChannel.users = users;
-    return await this.setChannel(newChannel);
-  }
-
   updateChannelVideoId(channel, videoId) {
     console.log("i run");
     const channelRef = this.db.object(`channels/${channel.uid}`);
@@ -88,30 +59,3 @@ export class ChannelService {
     return users.some((uid) => uid === userUid);
   }
 }
-
-/*
-
-  updateChannel(channel: Channel, user: User) {
-    // Sets user data to firestore on login
-    const channelRef = this.db.object(`channels/${channel.uid}`);
-    const users = channel.users ? [...channel.users, user] : [user];
-    const data: Channel = {
-      uid: channel.uid,
-      isPlaying: channel.isPlaying,
-      users,
-      canPlay: channel.canPlay,
-      videoId: "",
-      status: { status: null, timestamp: null },
-      // Very poorly designed update asap
-      hostIsOnline: users
-        ? this.lookForHostInChannelUsers(users)
-          ? true
-          : false
-        : false,
-    };
-
-    console.log(data, "channel data");
-
-    // Set is destructive use update
-    return channelRef.update(data);
-  }*/

@@ -1,8 +1,13 @@
 import { Injectable } from "@angular/core";
 import { YoutubePlayerService } from "./youtube-player.service";
-import { VideoStatus, Channel } from "src/app/models/channel.model";
+import {
+  VideoStatus,
+  Channel,
+  ChannelVideo,
+} from "src/app/models/channel.model";
 import { YoutubePlayerStateService } from "./youtube-player-state.service";
 import { ChannelService } from "src/app/services/channel.service";
+import { ChannelVideoService } from "src/app/services/channel-video.service";
 
 @Injectable({
   providedIn: "root",
@@ -11,17 +16,23 @@ export class ChannelVideoStateService {
   constructor(
     private youtubePlayerService: YoutubePlayerService,
     private youtubePlayerStateService: YoutubePlayerStateService,
-    private channelService: ChannelService
+    private channelService: ChannelService,
+    private channelVideoService: ChannelVideoService
   ) {}
 
-  onStateChange(channel: Channel, playerIsPlaying: boolean, isHost: boolean) {
-    const { videoStatus, videoId, currentTime } = channel.video;
+  onStateChange(
+    channelUid: string,
+    channelVideo: ChannelVideo,
+    playerIsPlaying: boolean,
+    isHost: boolean
+  ) {
+    const { videoStatus, videoId, currentTime } = channelVideo;
     switch (videoStatus) {
       case VideoStatus.PLAY:
         this.onPlay(videoId, playerIsPlaying, currentTime, isHost);
         break;
       case VideoStatus.CUE:
-        this.onCue(channel);
+        this.onCue(channelUid, channelVideo);
         break;
       case VideoStatus.PAUSE:
         this.onPause();
@@ -56,14 +67,14 @@ export class ChannelVideoStateService {
     }
   }
 
-  private onCue(channel: Channel) {
-    const ch = { ...channel };
+  private onCue(channelUid: string, channelVideo: ChannelVideo) {
+    const chVideo = { ...channelVideo };
     this.youtubePlayerService.loadVideoById(
-      channel.video.videoId,
-      channel.video.currentTime
+      chVideo.videoId,
+      chVideo.currentTime
     );
-    ch.video.videoStatus = VideoStatus.PLAY;
-    this.channelService.setChannel(ch);
+    chVideo.videoStatus = VideoStatus.PLAY;
+    this.channelVideoService.updateChannelVideo(channelUid, chVideo);
   }
 
   private onPause() {
