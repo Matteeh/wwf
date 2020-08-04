@@ -44,7 +44,18 @@
       class="ion-align-items-center ion-justify-content-center video-player-container"
     >
       <ion-col>
-        <app-youtube-player [playerId]="channelUid"></app-youtube-player>
+        <app-youtube-player
+          [playerId]="channelUid"
+          [isPlaying]="playerStateService.playerIsPlaying"
+          [volume]="userVolume.volume"
+          [muted]="userVolume.muted"
+          (playButtonClick)="onPlayButtonClick()"
+          (volumeButtonClick)="onVolumeButtonClick()"
+          (volumeRangeChange)="onVolumeRangeChange($event)"
+          [videoCurrentTimeWatcher]="playerStateService.videoCurrentTime"
+          [videoDuration]="playerStateService.videoDuration"
+          (videoRangeClick)="onVideoRangeClick($event)"
+        ></app-youtube-player>
       </ion-col>
     </ion-row>
   </ion-grid>

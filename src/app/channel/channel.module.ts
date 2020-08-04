@@ -17,6 +17,11 @@ import { PresenceService } from "../services/presence.service";
 import { YoutubePlayerStateService } from "./services/youtube-player-state.service";
 import { ChannelVideoStateService } from "./services/channel-video-state.service";
 import { ChannelPageService } from "./services/channel-page.service";
+import { PlayButtonComponent } from "./components/play-button/play-button.component";
+import { VolumeControlComponent } from "./components/volume-control/volume-control.component";
+import { ChannelUsersService } from "../services/channel-users.service";
+import { UserVolumeService } from "../services/user-volume.service";
+import { ProgressBarComponent } from "./components/progress-bar/progress-bar.component";
 
 @NgModule({
   imports: [
@@ -34,12 +39,17 @@ import { ChannelPageService } from "./services/channel-page.service";
     YoutubePlayerStateService,
     ChannelVideoStateService,
     ChannelPageService,
+    ChannelUsersService,
+    UserVolumeService,
   ],
   declarations: [
     ChannelPage,
     SearchBarComponent,
     VideoCardComponent,
     YoutubePlayerComponent,
+    PlayButtonComponent,
+    VolumeControlComponent,
+    ProgressBarComponent,
   ],
 })
 export class ChannelPageModule {}

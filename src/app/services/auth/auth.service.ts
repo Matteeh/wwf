@@ -7,10 +7,10 @@ import { AngularFireAuth } from "@angular/fire/auth";
 import { AngularFireDatabase } from "@angular/fire/database";
 
 import { Observable, of } from "rxjs";
-import { switchMap, min, take } from "rxjs/operators";
+import { switchMap, take } from "rxjs/operators";
 
-import { User } from "../models/user.model";
-import { Channel } from "../models/channel.model";
+import { User } from "../../models/user.model";
+import { Channel } from "../../models/channel.model";
 
 @Injectable({
   providedIn: "root",

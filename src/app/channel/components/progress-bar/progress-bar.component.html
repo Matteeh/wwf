@@ -1,0 +1,18 @@
+<div class="video-range">
+  <ion-range
+    class="video-range ion-no-margin ion-no-padding"
+    ticks="false"
+    [ngModel]="videoCurrentTimeWatcher | async"
+    (ngModelChange)="videoCurrentTime = $event"
+    (click)="onVideoRangeClick($event)"
+    [value]="videoCurrentTime"
+    [min]="0"
+    [max]="videoDuration"
+  ></ion-range>
+</div>
+<!--
+<ion-progress-bar
+  class="video-range ion-no-margin ion-no-padding"
+  [value]="videoCurrentTime / videoDuration"
+></ion-progress-bar>
+ -->

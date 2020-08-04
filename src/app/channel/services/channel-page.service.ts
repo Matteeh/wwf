@@ -9,7 +9,7 @@ import { switchMap, tap, catchError, filter, mapTo, map } from "rxjs/operators";
 import { ChannelService } from "src/app/services/channel.service";
 import { UserService } from "src/app/services/user.service";
 import { User } from "src/app/models/user.model";
-import { AuthService } from "src/app/services/auth.service";
+import { AuthService } from "src/app/services/auth/auth.service";
 import { Router } from "@angular/router";
 import { ChannelVideoService } from "src/app/services/channel-video.service";
 import { ChannelPageRoutingModule } from "../channel-routing.module";

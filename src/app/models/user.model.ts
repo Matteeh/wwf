@@ -7,3 +7,8 @@ export interface User {
   isReady: boolean;
   status: Status;
 }
+
+export interface UserVolume {
+  volume: number;
+  muted: boolean;
+}

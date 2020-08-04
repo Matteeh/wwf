@@ -1,4 +1,9 @@
-<ion-card (click)="onCardClick($event)" tappable style="width: 250px;">
+<ion-card
+  class="video-card"
+  (click)="onCardClick($event)"
+  tappable
+  style="width: 250px;"
+>
   <img [src]="video.snippet.thumbnails.medium.url" />
   <ion-card-header>
     <ion-card-subtitle

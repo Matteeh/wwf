@@ -1,0 +1,25 @@
+<ion-row class="ion-no-margin ion-no-padding">
+  <ion-col size="auto" class="ion-no-margin ion-no-padding">
+    <ion-button
+      expand="full"
+      color="none"
+      fill="clear"
+      class="ion-no-margin ion-no-padding"
+      (click)="onVolumeClick()"
+      ><ion-icon
+        slot="icon-only"
+        [name]="muted ? 'volume-mute-outline' : 'volume-medium-outline'"
+        color="primary"
+      ></ion-icon
+    ></ion-button>
+  </ion-col>
+  <ion-col size="auto" class="ion-no-margin ion-no-padding">
+    <ion-range
+      [(ngModel)]="volume"
+      (ionChange)="onVolumeRangeChange($event)"
+      class="ion-no-margin ion-no-padding"
+      min="0"
+      max="100"
+    ></ion-range>
+  </ion-col>
+</ion-row>

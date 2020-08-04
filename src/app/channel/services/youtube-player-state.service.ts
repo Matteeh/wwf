@@ -1,21 +1,19 @@
 import { Injectable } from "@angular/core";
-import { ChannelService } from "src/app/services/channel.service";
-import {
-  Channel,
-  VideoStatus,
-  ChannelVideo,
-} from "src/app/models/channel.model";
+import { VideoStatus, ChannelVideo } from "src/app/models/channel.model";
 import { YoutubePlayerService } from "./youtube-player.service";
 import { ChannelVideoService } from "src/app/services/channel-video.service";
+import { Subject } from "rxjs";
 
 @Injectable({
   providedIn: "root",
 })
 export class YoutubePlayerStateService {
-  playerIsPlaying: boolean = false;
-  playerIsReady: boolean = false;
+  playerIsPlaying = false;
+  playerIsReady = false;
+  updateVideoCurrentTimeInterval: ReturnType<typeof setInterval>;
+  videoCurrentTime: Subject<number> = new Subject<number>();
+  videoDuration: number;
   constructor(
-    private channelService: ChannelService,
     private channelVideoService: ChannelVideoService,
     private youtubePlayerService: YoutubePlayerService
   ) {}
@@ -24,6 +22,8 @@ export class YoutubePlayerStateService {
    * Event emitted from youtube component on player error
    */
   onPlayerError(event: string, channelUid: string, channelVideo: ChannelVideo) {
+    this.stopWatchingVideoCurrentTime();
+    this.videoDuration = 0;
     // On error stop video and update
     console.log("ERROR", event);
     channelVideo.videoStatus = VideoStatus.STOP;
@@ -70,6 +70,7 @@ export class YoutubePlayerStateService {
     channelVideo: ChannelVideo,
     playerCurrentTime: number
   ) {
+    this.watchVideoCurrentTime();
     if (isHost) {
       this.setChannelVideoData(
         VideoStatus.PLAY,
@@ -96,6 +97,7 @@ export class YoutubePlayerStateService {
     channelVideo: ChannelVideo,
     playerCurrentTime: number
   ) {
+    this.stopWatchingVideoCurrentTime();
     this.playerIsPlaying = false;
     console.log(`paused @ ${playerCurrentTime}`);
     if (isHost) {
@@ -117,6 +119,8 @@ export class YoutubePlayerStateService {
     channelUid: string,
     channelVideo: ChannelVideo
   ) {
+    this.videoDuration = 0;
+    this.stopWatchingVideoCurrentTime();
     this.playerIsPlaying = false;
     if (isHost) {
       this.setChannelVideoData(
@@ -148,5 +152,19 @@ export class YoutubePlayerStateService {
     chVideo.currentTime = currentTime;
     chVideo.isPlaying = isPlaying;
     this.channelVideoService.updateChannelVideo(channelUid, chVideo);
+  }
+
+  private watchVideoCurrentTime(): void {
+    this.videoDuration = this.youtubePlayerService.getVideoDuration();
+    if (!this.updateVideoCurrentTimeInterval) {
+      this.updateVideoCurrentTimeInterval = setInterval(() => {
+        this.videoCurrentTime.next(this.youtubePlayerService.getCurrentTime());
+      }, 1000);
+    }
+  }
+
+  private stopWatchingVideoCurrentTime(): void {
+    clearInterval(this.updateVideoCurrentTimeInterval);
+    this.updateVideoCurrentTimeInterval = null;
   }
 }

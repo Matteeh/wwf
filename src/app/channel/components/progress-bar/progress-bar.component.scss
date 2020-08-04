@@ -1,0 +1,13 @@
+ion-range::part(bar) {
+  cursor: pointer !important;
+  &:hover {
+    cursor: pointer !important;
+  }
+}
+
+ion-range::part(bar-active) {
+  cursor: pointer !important;
+  &:hover {
+    cursor: pointer !important;
+  }
+}

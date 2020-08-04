@@ -1,0 +1,9 @@
+.video-range {
+  --knob-size: 10px;
+  .range-slider {
+    &:hover {
+      cursor: pointer !important;
+    }
+    cursor: pointer;
+  }
+}

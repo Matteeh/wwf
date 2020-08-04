@@ -36,7 +36,7 @@ export class YoutubePlayerService {
       videoId: "",
       playerVars: {
         autoplay: 0,
-        controls: 1,
+        controls: 0,
         rel: 0,
         fs: 1,
         disablekb: 0,
@@ -60,7 +60,7 @@ export class YoutubePlayerService {
   }
 
   /**
-   * State handler for the youtube video player
+   * State change handler for the youtube video player
    */
   onPlayerStateChange(event) {
     switch (event.data) {
@@ -113,6 +113,28 @@ export class YoutubePlayerService {
     }
   }
 
+  toggleMute(muted) {
+    if (this.player) {
+      if (muted) {
+        this.player.unMute();
+      } else {
+        this.player.mute();
+      }
+    }
+  }
+
+  getVolume() {
+    if (this.player) {
+      return this.player.getVolume();
+    }
+  }
+
+  setVolume(volume: number) {
+    if (this.player) {
+      this.player.setVolume(volume);
+    }
+  }
+
   loadVideoById(videoId: string, startSeconds: number) {
     if (this.player && this.player["loadVideoById"]) {
       this.player["cueVideoById"]({
@@ -122,10 +144,17 @@ export class YoutubePlayerService {
     }
   }
 
+  getVideoDuration(): number {
+    if (this.player) {
+      console.log(Math.round(this.player.getDuration()));
+      return Math.round(this.player.getDuration());
+    }
+  }
+
   /**
    * Get current time
    */
-  getCurrentTime() {
+  getCurrentTime(): number {
     if (this.player) {
       return Math.round(this.player.playerInfo.currentTime);
     }

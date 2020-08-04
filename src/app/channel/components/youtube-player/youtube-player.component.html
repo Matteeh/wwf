@@ -1,16 +1,67 @@
-<div>
+<ion-row>
   <div
     style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0;"
   >
     <div
       [id]="playerId"
-      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+      style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+      "
     ></div>
-    <!--
-    <ion-row style="width: 200px;">
-      <ion-button>a</ion-button>
-      <ion-range min="0" max="100"></ion-range>
-    </ion-row>
-    -->
+    <div
+      class="ion-justify-content-end"
+      style="position: absolute; bottom: 0px; width: 100%; height: 92px;"
+    >
+      <div
+        style="
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: end;
+          width: 100%;
+          min-height: 100%;
+          margin-bottom: auto;
+        "
+      >
+        <ion-row
+          style="
+            height: 28px;
+            padding-left: 16px;
+            padding-right: 16px;
+            margin-top: auto;
+          "
+          class="ion-no-margin ion-no-padding"
+        >
+          <app-progress-bar
+            style="width: 100%;"
+            [videoCurrentTimeWatcher]="videoCurrentTimeWatcher"
+            [videoDuration]="videoDuration"
+            (videoRangeClick)="onVideoRangeClick($event)"
+          ></app-progress-bar>
+        </ion-row>
+        <ion-row style="height: 42px; margin-left: 8px;">
+          <ion-col size="auto" class="ion-no-margin ion-no-padding">
+            <app-play-button
+              [playing]="isPlaying"
+              (playButtonClick)="onPlayButtonClick($event)"
+            ></app-play-button>
+          </ion-col>
+          <ion-col size="auto" class="ion-no-margin ion-no-padding">
+            <app-volume-control
+              [volume]="volume"
+              [muted]="muted"
+              (volumeButtonClick)="onVolumeButtonClick()"
+              (volumeRangeChange)="onVolumeRangeChange($event)"
+            ></app-volume-control>
+          </ion-col>
+          <ion-col></ion-col>
+        </ion-row>
+      </div>
+    </div>
   </div>
-</div>
+</ion-row>
