@@ -18,14 +18,34 @@ export class YoutubePlayerComponent implements OnInit {
 
   @Input() playerId: string;
   @Input() isPlaying: boolean;
+  @Input() playerIsReady: boolean;
   @Input() volume: number;
   @Input() muted: boolean;
   @Input() videoCurrentTimeWatcher: Subject<number>;
   @Input() videoDuration: number;
+  hideControlsTimeout;
+
+  showControls = false;
 
   constructor() {}
 
   ngOnInit() {}
+
+  onMouseOverControlsWrapper(e) {
+    // console.log(this.hideControlsTimeout);
+    this.showControls = true;
+    /*if (this.hideControlsTimeout) {
+      clearTimeout(this.hideControlsTimeout);
+    }
+    this.hideControlsTimeout = setTimeout(() => {
+      this.showControls = false;
+    }, 5000);*/
+  }
+
+  onMouseOutControlsWrapper(e) {
+    this.showControls = false;
+    // clearTimeout(this.hideControlsTimeout);
+  }
 
   /**
    * Emits a string on play button click

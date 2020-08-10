@@ -7,3 +7,50 @@
     cursor: pointer;
   }
 }
+
+.youtube-player-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  height: 0;
+}
+.youtube-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: black;
+}
+.controls-wrapper {
+  transition: height 0.5s linear;
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+  height: 92px;
+}
+
+.controls-wrapper-closed {
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+  height: 60px;
+}
+
+.controls-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  width: 100%;
+  min-height: 100%;
+  margin-bottom: auto;
+  overflow-y: hidden;
+}
+
+.controls-container-row {
+  height: 28px;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin-top: auto;
+}

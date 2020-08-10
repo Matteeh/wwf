@@ -24,15 +24,13 @@ import { UserVolumeService } from "../services/user-volume.service";
 export class ChannelPage {
   isHost = false;
   user: User;
-  userVolume: UserVolume = { volume: 50, muted: false };
-  destroyYoutube = false;
+  userVolume: UserVolume;
   channel: Channel;
   channelVideo: ChannelVideo;
   channelUsers;
   channelUid: string;
   videos: any[] = [];
   unsubscribe: Subject<any> = new Subject<any>();
-  videoDuration: number;
 
   constructor(
     private authService: AuthService,
@@ -45,51 +43,48 @@ export class ChannelPage {
     private presence: PresenceService,
     private channelVideoStateService: ChannelVideoStateService,
     private youtubePlayerService: YoutubePlayerService,
-    private channelPageService: ChannelPageService,
     private userVolumeService: UserVolumeService,
+    private channelPageService: ChannelPageService,
     public playerStateService: YoutubePlayerStateService
   ) {
     this.presence.initPresenceSubscriptions();
   }
 
-  async ionViewDidEnter() {
-    // Always create a new watcher on new channel
-    this.youtubePlayerService.playerStateWatcher = new Subject();
+  async ionViewWillEnter() {
     this.channelUid = this.route.snapshot.paramMap.get("id");
 
-    console.log("ionViewWillEnter!!!", this.channelUid);
+    this.user = await this.authService.getUser();
+    this.isHost = this.evalIsHost(this.user.username, this.router.url);
+    this.userVolume = await this.userVolumeService.getUserVolume(this.user.uid);
 
-    const user = await this.authService.getUser();
-    this.user = { ...user };
-    this.setIsHost(user);
-    const userVolume = await this.userVolumeService.getUserVolume(user.uid);
-    this.setUserVolume(userVolume);
-    await this.channelPageService.addChannelUser(this.channelUid, user.uid);
+    await this.channelUserService.updateChannelUser(this.channelUid, {
+      [this.user.uid]: true,
+    });
+
     this.youtubePlayerService.IframeApiInit();
     this.onYoutubePlayerStateChange();
   }
 
-  initWatcherOnIframeReady() {
+  initWatcherOnIframeReady(): void {
     this.watchChannelChanges(this.channelUid);
     this.watchChannelVideoChanges(this.channelUid);
     this.watchChannelUsers(this.channelUid);
   }
 
-  watchChannelChanges(uid: string) {
+  watchChannelChanges(uid: string): void {
     this.channelService
       .getChannel(uid)
       .pipe(takeUntil(this.unsubscribe))
       .subscribe(
         (channel: Channel) => {
-          this.channel = this.channelPageService.getChannel(channel);
+          this.channel = { ...channel };
         },
         (err) => console.error("WATCH CHANNEL CHANGES ERROR", err),
         () => console.warn("WATCH CHANNEL CHANGES HAS COMPLETED")
       );
   }
 
-  watchChannelUsers(uid: string) {
-    let counter = 0;
+  watchChannelUsers(uid: string): void {
     this.channelUserService
       .getChannelUsers(uid)
       .pipe(takeUntil(this.unsubscribe))
@@ -101,14 +96,14 @@ export class ChannelPage {
               this.youtubePlayerService.getCurrentTime()
             );
           }
-          console.log(channelUsers, this.channelUid, counter++);
+          console.log(channelUsers, this.channelUid);
         },
         (err) => console.error("WATCH CHANNEL USERS ERROR", err),
         () => console.warn("WATCH CHANNEL USERS HAS COMPLETED")
       );
   }
 
-  watchChannelVideoChanges(uid: string) {
+  watchChannelVideoChanges(uid: string): void {
     this.channelVideoService
       .getChannelVideo(uid)
       .pipe(takeUntil(this.unsubscribe))
@@ -148,49 +143,38 @@ export class ChannelPage {
   /**
    * Sets the video id in the db
    */
-  setVideoId(e: string) {
-    this.channelPageService.setVideoId(e, this.channelUid, this.channelVideo);
+  setVideoId(e: string): void {
+    this.channelVideoService.setChannelVideo(this.channelUid, {
+      videoId: e,
+      currentTime: 0,
+      videoStatus: VideoStatus.CUE,
+    });
   }
 
   /**
    * Handles the user input from the search-bar component
    */
-  handleSearchValue(searchValue: string) {
+  handleSearchValue(searchValue: string): void {
     this.youtubeService.listVideoItems(searchValue).subscribe((items) => {
       this.videos = items;
-      console.log(this.videos, "ITEMS");
     });
   }
 
-  onPlayButtonClick() {
-    if (
-      !this.playerStateService.playerIsPlaying &&
-      this.playerStateService.playerIsReady
-    ) {
-      this.youtubePlayerService.play();
-    } else if (
-      this.playerStateService.playerIsPlaying &&
-      this.playerStateService.playerIsReady
-    ) {
-      this.youtubePlayerService.pause();
+  onPlayButtonClick(): void {
+    if (!this.playerStateService.playerIsPlaying) {
+      return this.youtubePlayerService.play();
     }
+    this.youtubePlayerService.pause();
   }
 
-  onVolumeButtonClick() {
-    if (this.userVolume.muted) {
-      this.youtubePlayerService.toggleMute(true);
-      this.userVolume = { volume: this.userVolume.volume, muted: false };
-    } else {
-      this.youtubePlayerService.toggleMute(false);
-      this.userVolume = { volume: this.userVolume.volume, muted: true };
-    }
-    this.userVolumeService.updateChannelUser(this.user.uid, this.userVolume);
+  onVolumeButtonClick(): void {
+    this.youtubePlayerService.toggleMute();
+    this.userVolume = { ...this.userVolume, muted: !this.userVolume.muted };
   }
 
-  onVolumeRangeChange(volume): void {
+  onVolumeRangeChange(volume: number): void {
     this.youtubePlayerService.setVolume(volume);
-    this.userVolume.volume = volume;
-    this.userVolumeService.updateChannelUser(this.user.uid, this.userVolume);
+    this.userVolume = { ...this.userVolume, volume };
   }
 
   onVideoRangeClick(clickedTime: number): void {
@@ -200,31 +184,29 @@ export class ChannelPage {
   /**
    * Event emitted from youtube component on player state changed
    */
-  onYoutubePlayerStateChange() {
-    this.youtubePlayerService.playerStateWatcher
-      .pipe(takeUntil(this.unsubscribe))
-      .subscribe(
-        (state) => {
-          if (state === "READY") {
-            this.initWatcherOnIframeReady();
-          }
-          this.playerStateService.onPlayerStateChange(
-            state,
-            this.channelUid,
-            this.isHost,
-            this.channelVideo,
-            this.youtubePlayerService.getCurrentTime()
-          );
-        },
-        (err) => console.error("YOUTUBE PLAYER STATE WATCHER ERROR", err),
-        () => console.warn("YOUTUBE PLAYER STATE WATCHER HAS COMPLETED")
-      );
+  onYoutubePlayerStateChange(): void {
+    this.youtubePlayerService.playerStateWatcher.subscribe(
+      (state) => {
+        if (state === "READY") {
+          this.initWatcherOnIframeReady();
+        }
+        this.playerStateService.onPlayerStateChange(
+          state,
+          this.channelUid,
+          this.isHost,
+          this.channelVideo,
+          this.youtubePlayerService.getCurrentTime()
+        );
+      },
+      (err) => console.error("YOUTUBE PLAYER STATE WATCHER ERROR", err),
+      () => console.warn("YOUTUBE PLAYER STATE WATCHER HAS COMPLETED")
+    );
   }
 
   /**
    * Event emitted from youtube component on player error
    */
-  onYoutubePlayerError(event) {
+  onYoutubePlayerError(event): void {
     this.playerStateService.onPlayerError(
       event,
       this.channelUid,
@@ -234,22 +216,12 @@ export class ChannelPage {
 
   async ionViewWillLeave() {
     console.log("ION VIEW WILL LEAVE", this.channelUid);
-    this.youtubePlayerService.pause();
-    this.youtubePlayerService.destroyPlayer();
-    this.youtubePlayerService.player = null;
+    this.userVolumeService.updateChannelUser(this.user.uid, this.userVolume);
+    this.playerCleanUpOnLeave();
     this.playerStateService.playerIsReady = false;
     if (this.isHost) {
-      this.channelVideo.videoId = "";
-      this.channelVideo.videoStatus = VideoStatus.STOP;
-      this.channelVideo.currentTime = 0;
-      this.channelVideoService.updateChannelVideo(
-        this.channelUid,
-        this.channelVideo
-      );
+      this.hostCleanUpOnLeave();
     }
-    this.channelVideo = null;
-    this.channelUsers = null;
-    this.channel = null;
     await this.channelUserService.removeChannelUser(this.channelUid, {
       [this.user.uid]: true,
     });
@@ -257,21 +229,28 @@ export class ChannelPage {
     this.unsubscribe.complete();
   }
 
-  private setUserVolume(userVolume: UserVolume) {
-    console.log("userVolume", userVolume);
-    if (userVolume) {
-      this.userVolume = { ...userVolume };
-    } else {
-      this.userVolume = { volume: 50, muted: false };
-    }
+  /**
+   * Evaluates if user is host of current channel
+   */
+  private evalIsHost(username: string, url: string): boolean {
+    return `/${username}` === url ? true : false;
   }
 
-  private setIsHost(user: User) {
-    if (user) {
-      this.isHost = this.channelPageService.getIsHost(
-        user.username,
-        this.router.url
-      );
-    }
+  private playerCleanUpOnLeave() {
+    this.youtubePlayerService.pause();
+    this.youtubePlayerService.destroyPlayer();
+    this.youtubePlayerService.player = null;
+  }
+
+  private hostCleanUpOnLeave() {
+    this.youtubePlayerService.playerStateWatcher.next("ENDED");
+    this.channelVideo.videoId = "";
+    this.channelVideo.videoStatus = VideoStatus.STOP;
+    this.channelVideo.currentTime = 0;
+
+    this.channelVideoService.updateChannelVideo(
+      this.channelUid,
+      this.channelVideo
+    );
   }
 }

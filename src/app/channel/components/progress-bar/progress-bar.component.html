@@ -1,11 +1,16 @@
 <div class="video-range">
+  <div #hovered class="hovered-timer" [hidden]="!isHovered">
+    {{ hoveredTime * 1000 | date: "mm:ss" }}
+  </div>
   <ion-range
+    #videoRange
     class="video-range ion-no-margin ion-no-padding"
     ticks="false"
-    [ngModel]="videoCurrentTimeWatcher | async"
-    (ngModelChange)="videoCurrentTime = $event"
     (click)="onVideoRangeClick($event)"
-    [value]="videoCurrentTime"
+    (mousemove)="onMouseOver($event)"
+    (mouseout)="onMouseLeave($event)"
+    [value]="videoCurrentTimeWatcher | async"
+    step="0.5"
     [min]="0"
     [max]="videoDuration"
   ></ion-range>

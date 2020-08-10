@@ -28,47 +28,9 @@ export class ChannelPageService {
     private router: Router
   ) {}
 
-  /**
-   * Executes on channel page initialization, setups controller variables
-   * and checks that the channel route is valid also adds user to channel
-   * @returns Observable<[Channel, isRouteValid, User]>
-   */
-  onChannelPageInit(channelUid: string): Observable<[User, Channel, boolean]> {
-    return from(
-      Promise.all([
-        this.getUser(),
-        this.channelService.getChannelAsPromise(channelUid),
-        this.isRouteValid(channelUid),
-      ])
-    ).pipe(
-      tap(([user, channel, isRouteValid]) => {
-        if (!isRouteValid) this.router.navigate(["/channel-not-found"]);
-        if (!user.uid) this.router.navigate["/sign-in"];
-        this.channelUserService.updateChannelUser(channel.uid, {
-          [user.uid]: true,
-        });
-      })
-    );
-  }
-
-  addChannelUser(channelUid: string, userUid: string) {
-    this.channelUserService.updateChannelUser(channelUid, { [userUid]: true });
-  }
-
-  updateHostVideoTime(channelUid: string, currentTime: number) {
+  updateHostVideoTime(channelUid: string, currentTime: number): void {
     console.log("I am updating the channel time");
     this.channelVideoService.updateChannelVideoTime(channelUid, currentTime);
-  }
-
-  /**
-   * Sets the video id locally and in the db
-   */
-  setVideoId(e: string, uid: string, channelVideo: ChannelVideo) {
-    const cv = { ...channelVideo };
-    cv.videoId = e;
-    cv.currentTime = 0;
-    cv.videoStatus = VideoStatus.CUE;
-    this.channelVideoService.setChannelVideo(uid, cv);
   }
 
   /**
@@ -80,13 +42,6 @@ export class ChannelPageService {
       hostIsOnline: hostIsOnline ? true : false,
       status: { ...status } || { status: null, timestamp: null },
     };
-  }
-
-  /**
-   * Evaluates if user is host of current channel
-   */
-  getIsHost(username: string, url: string): boolean {
-    return `/${username}` === url ? true : false;
   }
 
   /**

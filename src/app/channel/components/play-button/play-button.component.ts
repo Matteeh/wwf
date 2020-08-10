@@ -11,6 +11,7 @@ export class PlayButtonComponent {
     this.isPlaying = isPlaying;
     this.setButtonIcon(isPlaying);
   }
+  @Input() disabled: boolean;
   isPlaying: boolean;
   buttonIcon: string;
   constructor() {}

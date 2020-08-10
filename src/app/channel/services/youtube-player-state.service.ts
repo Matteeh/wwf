@@ -41,7 +41,6 @@ export class YoutubePlayerStateService {
   ) {
     switch (event) {
       case "IFRAME_READY":
-        console.log("IFRAME READY");
         this.youtubePlayerService.createPlayer(channelUid);
         break;
       case "READY":
@@ -147,19 +146,21 @@ export class YoutubePlayerStateService {
     channelUid: string,
     channelVideo: ChannelVideo
   ) {
-    const chVideo: ChannelVideo = { ...channelVideo };
-    chVideo.videoStatus = videoStatus;
-    chVideo.currentTime = currentTime;
-    chVideo.isPlaying = isPlaying;
-    this.channelVideoService.updateChannelVideo(channelUid, chVideo);
+    this.channelVideoService.updateChannelVideo(channelUid, {
+      ...channelVideo,
+      videoStatus,
+      currentTime,
+      isPlaying,
+    });
   }
 
   private watchVideoCurrentTime(): void {
+    // Move this to a better place
     this.videoDuration = this.youtubePlayerService.getVideoDuration();
     if (!this.updateVideoCurrentTimeInterval) {
       this.updateVideoCurrentTimeInterval = setInterval(() => {
         this.videoCurrentTime.next(this.youtubePlayerService.getCurrentTime());
-      }, 1000);
+      }, 500);
     }
   }
 

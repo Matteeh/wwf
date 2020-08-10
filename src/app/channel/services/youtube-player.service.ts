@@ -7,7 +7,7 @@ import { Subject } from "rxjs";
 export class YoutubePlayerService {
   player: any;
   // Create a new watcher from the component life cycle hook
-  playerStateWatcher: Subject<string>;
+  playerStateWatcher: Subject<string> = new Subject<string>();
   iframeInitialized = false;
   constructor() {
     window["onYouTubeIframeAPIReady"] = () =>
@@ -17,7 +17,7 @@ export class YoutubePlayerService {
   /**
    * Initialize the youtube iframe api
    */
-  IframeApiInit() {
+  IframeApiInit(): void {
     window["YT"] = null;
     var tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
@@ -29,7 +29,7 @@ export class YoutubePlayerService {
   /**
    * Starts the youtube video player
    */
-  createPlayer(channelUid: string) {
+  createPlayer(channelUid: string): void {
     console.log("creating player");
     this.player = null;
     this.player = new window["YT"].Player(channelUid, {
@@ -54,7 +54,7 @@ export class YoutubePlayerService {
   /**
    * Hook for youtube video player
    */
-  onPlayerReady() {
+  onPlayerReady(): void {
     // this.player.
     this.playerStateWatcher.next("READY");
   }
@@ -62,7 +62,7 @@ export class YoutubePlayerService {
   /**
    * State change handler for the youtube video player
    */
-  onPlayerStateChange(event) {
+  onPlayerStateChange(event): void {
     switch (event.data) {
       case window["YT"].PlayerState.PLAYING:
         this.playerStateWatcher.next("PLAYING");
@@ -86,56 +86,55 @@ export class YoutubePlayerService {
   /**
    * Error handler for the youtube video player
    */
-  onPlayerError(event) {
+  onPlayerError(event): void {
     this.playerStateWatcher.next("ERROR");
     // this.playerError.emit(event);
   }
 
-  destroyPlayer() {
+  destroyPlayer(): void {
     this.player.destroy();
   }
 
-  play() {
+  play(): void {
     if (this.player && this.player["playVideo"]) {
       this.player.playVideo();
     }
   }
 
-  seekTo(time: number) {
+  seekTo(time: number): void {
     if (this.player && this.player["seekTo"]) {
       this.player["seekTo"](time, true);
     }
   }
 
-  pause() {
+  pause(): void {
     if (this.player && this.player["pauseVideo"]) {
       this.player["pauseVideo"]();
     }
   }
 
-  toggleMute(muted) {
+  toggleMute(): void {
     if (this.player) {
-      if (muted) {
-        this.player.unMute();
-      } else {
-        this.player.mute();
+      if (this.player.isMuted()) {
+        return this.player.unMute();
       }
+      this.player.mute();
     }
   }
 
-  getVolume() {
+  getVolume(): void {
     if (this.player) {
       return this.player.getVolume();
     }
   }
 
-  setVolume(volume: number) {
+  setVolume(volume: number): void {
     if (this.player) {
       this.player.setVolume(volume);
     }
   }
 
-  loadVideoById(videoId: string, startSeconds: number) {
+  loadVideoById(videoId: string, startSeconds: number): void {
     if (this.player && this.player["loadVideoById"]) {
       this.player["cueVideoById"]({
         videoId: videoId,
