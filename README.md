@@ -1,17 +1,57 @@
-# wwf
+# Chomie
 
-Watch with friends
+The main objective of this project was to create an application that would solve the displeasure of watching YouTube videos simultaneously together with a group of people over the internet. The annoyance lies in the lack of a feature that would allow you to start, pause and jump to specific timelines of a said video with a group of people. This application solves this by creating an environment where you have access to all these features while still being able to watch the same video that one could watch on YouTube.
 
-Only supporting Chrome at this stage
+### Demo
 
-# Work in progress
+https://chomie.tv/sign-in
 
-Current status: Usually works to watch videos together as long as the guests are in the channel before the hosts starts the video.
+## Table of content
 
-To be implemented: Pause video, Keep track of videos current time so users can hop in whenever.
+- [Pre-reqs](#Pre-reqs)
+- [Installation](#installation)
+  - [npm](#npm)
 
-Adding bugs to issues
+## Pre-reqs
 
-# Demo
+To build and run this app locally you will need to install the following:
 
-https://wwf-4d.web.app
+- [Node.js](https://nodejs.org/en/)
+
+- [Angular CLI](https://cli.angular.io/)
+
+- [Firebase CLI](https://firebase.google.com/docs/cli)
+
+## Installing dependencies
+
+Install npm packages
+
+```
+npm i
+```
+
+## Running the application
+
+Use the Angular CLI tool to serve the application
+
+```
+ng serve
+```
+
+## Deploying
+
+Use the Angular CLI tool to build the production version of the application
+
+```
+ng build
+```
+
+Then after that use Firebase CLI tool to deploy it
+
+```
+firebase deploy --only hosting
+```
+
+## Authors
+
+- **Mathias Rahikainen** - [Matteeh](https://github.com/matteeh)
