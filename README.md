@@ -10,7 +10,7 @@ https://chomie.tv/sign-in
 
 - [Pre-reqs](#Pre-reqs)
 - [Installation](#installation)
-- [RunningTheApplication](#Running the application)
+- [Running The Application](#Runningtheapplication)
 - [Deploying](#Deploying)
 - [Authors](#Authors)
 
