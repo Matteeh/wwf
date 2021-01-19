@@ -13,6 +13,7 @@
         width: 100%;
         height: 100%;
         background-color: black;
+        pointer-events: none;
       "
     ></div>
     <div
@@ -25,13 +26,13 @@
       <div class="controls-container" [hidden]="!showControls">
         <ion-row class="controls-container-row ion-no-margin ion-no-padding">
           <app-progress-bar
-            style="width: 100%;"
+            style="width: 100%"
             [videoCurrentTimeWatcher]="videoCurrentTimeWatcher"
             [videoDuration]="videoDuration"
             (videoRangeClick)="onVideoRangeClick($event)"
           ></app-progress-bar>
         </ion-row>
-        <ion-row style="height: 42px; margin-left: 8px;">
+        <ion-row style="height: 42px; margin-left: 8px">
           <ion-col size="auto" class="ion-no-margin ion-no-padding">
             <app-play-button
               [disabled]="!playerIsReady"
@@ -48,11 +49,11 @@
             ></app-volume-control>
           </ion-col>
           <ion-col
-            style="margin-left: 16px;"
+            style="margin-left: 16px"
             size="auto"
             class="ion-no-margin ion-no-padding"
           >
-            <p style="color: white; font-size: small;">
+            <p style="color: white; font-size: small">
               {{
                 ((videoCurrentTimeWatcher | async) || 0) * 1000 | date: "mm:ss"
               }}
