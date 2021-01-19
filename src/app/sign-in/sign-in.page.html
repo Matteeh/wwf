@@ -1,15 +1,15 @@
 <ion-header> </ion-header>
 
 <ion-content
-  style="background-color: blueviolet; height: 400px;"
+  style="background-color: blueviolet; height: 400px"
   class="ion-justify-content-center ion-align-self-center"
 >
-  <ion-grid style="height: 100%;">
+  <ion-grid style="height: 100%">
     <ion-row
-      style="height: 90%;"
+      style="height: 90%"
       class="ion-align-items-center ion-justify-content-center"
     >
-      <ion-card style="width: 450px; height: 450px;" class="ion-padding">
+      <ion-card style="width: 450px; height: 450px" class="ion-padding">
         <ion-card-header>
           <ion-card-title class="ion-text-center"
             ><ion-title>Chomie</ion-title></ion-card-title
@@ -17,13 +17,16 @@
         </ion-card-header>
 
         <ion-card-content
-          style="height: 100%;"
+          style="height: 100%"
           class="ion-justify-content-center ion-align-items-end"
         >
           <ion-row
-            style="height: 80%;"
+            style="height: 80%"
             class="ion-justify-content-center ion-align-items-end"
           >
+            <ion-button color="medium" (click)="presentAlert()"
+              >Sign in anonymously</ion-button
+            >
             <ion-button (click)="auth.googleSignin()"
               >Sign in with Google</ion-button
             >

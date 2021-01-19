@@ -47,6 +47,15 @@ export class AuthService {
     ]);
   }
 
+  async anonymousSignIn(username: string): Promise<any> {
+    const credentials = await this.afAuth.signInAnonymously();
+    const user = this.createAnonymousUser(credentials.user, username);
+    console.log(user);
+    this.updateAnonymousUserData(user);
+    this.updateChannelData(user);
+    this.router.navigate([`/${user.username}`]);
+  }
+
   /**
    * Signs the user out
    */
@@ -81,6 +90,32 @@ export class AuthService {
       username: user.displayName.replace(/\s/g, ""),
       status: { status: null, timestamp: null },
     };
+  }
+
+  private createAnonymousUser(user: any, username) {
+    return {
+      uid: user.uid,
+      isReady: user.isReady || null,
+      username: `${username}-${user.uid}`,
+      status: { status: null, timestamp: null },
+    };
+  }
+
+  private updateAnonymousUserData(user: any) {
+    // Sets user data to firestore on login
+    const userRef = this.db.object(`users/${user.uid}`);
+
+    const data = {
+      uid: user.uid,
+      isReady: user.isReady || null,
+      username: user.username.replace(/\s/g, ""),
+      status: {
+        status: user.status ? user.status.status : null,
+        timestamp: user.status ? user.status.timestamp : null,
+      },
+    };
+    // Set is destructive use update
+    return userRef.update(data);
   }
 
   private updateChannelData(user) {
