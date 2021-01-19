@@ -10,7 +10,9 @@ https://chomie.tv/sign-in
 
 - [Pre-reqs](#Pre-reqs)
 - [Installation](#installation)
-  - [npm](#npm)
+- [Running the application](#Running the application)
+- [Deploying](#Deploying)
+- [Authors](#Authors)
 
 ## Pre-reqs
 
