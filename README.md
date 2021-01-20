@@ -55,7 +55,7 @@ Then after that use Firebase CLI tool to deploy it
 firebase deploy --only hosting
 ```
 
-##Feature requests and bug reports
+## Feature requests and bug reports
 Both are welcome, just open an issue.
 
 ## Authors
