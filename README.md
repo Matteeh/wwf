@@ -12,6 +12,7 @@ https://chomie.tv/sign-in
 - [Installation](#installation)
 - [Running The Application](#Runningtheapplication)
 - [Deploying](#Deploying)
+- [Feature requests and bug reports](#Feature)
 - [Authors](#Authors)
 
 ## Pre-reqs
@@ -53,6 +54,9 @@ Then after that use Firebase CLI tool to deploy it
 ```
 firebase deploy --only hosting
 ```
+
+##Feature requests and bug reports
+Both are welcome, just open an issue.
 
 ## Authors
 
